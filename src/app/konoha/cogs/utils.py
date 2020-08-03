@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import re
 import os
+import asyncio
 import subprocess
 import tabulate
 import aiomysql
@@ -41,7 +42,7 @@ class Utils(commands.Cog):
         message_dur, message = await get_duration(
             ctx.send, embed=embed
         )
-        embed.set_author(name='Pong!', icon_url=self.bot.user.avatar_url)
+        embed.set_author(name='🏓 Pong!', icon_url=self.bot.user.avatar_url)
         embed.description = f"{self.bot.user.mention}は正常稼働中です"
         embed.add_field(name="Websocket遅延", value=f"{self.bot.latency * 1000:.2f} ms")
         embed.add_field(name="API通信遅延", value=f"{discord_dur:.2f} ms")
@@ -74,6 +75,20 @@ class Utils(commands.Cog):
         logger.info("'Invite' コマンドが実行されました")
         logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         return await ctx.send(f"{config.oauth2_url}")
+
+    @commands.command()
+    async def timer(self, ctx: commands.Context, seconds: float):
+        '''
+        指定した秒数後にあなた宛てにメンションを送信します
+        '''
+        if seconds < 0:
+            return await ctx.send("負の時間待たせるとはどういうことなのでしょう(哲学)")
+        if seconds > 3600 * 3:
+            return await ctx.send("サーバーの逼迫を防ぐために最大秒数は現状3時間までです．\n申し訳ありません．")
+        await ctx.send(f"{seconds:.1f}秒のタイマーを設定しました")
+        await asyncio.sleep(seconds)
+        await ctx.send(f"{ctx.author.mention} {seconds:.1f}秒間経過しました!")
+
 
     @commands.command()
     @commands.guild_only()

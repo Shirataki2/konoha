@@ -8,18 +8,31 @@ from konoha.core.utils.pagination import EmbedPaginator
 
 class CustomHelpCommand(commands.HelpCommand): 
     def __init__(self):
-        super(CustomHelpCommand, self).__init__()
+        super(CustomHelpCommand, self).__init__(command_attrs={
+            "help": "コマンドに関するヘルプを表示します"
+        })
 
-    def get_command_signature(self, command: commands.Command):
-        if not command.signature and not command.parent:
-            return f"`{self.clean_prefix}{command.name}`"
-        if command.signature and not command.parent:
-            return f"`{self.clean_prefix}{command.name}` `{command.signature}`"
-        if not command.signature and command.parent:
-            return f"`    {command.name}`"
-        if command.signature and command.parent:
-            return f"`    {command.name}` `{command.signature}`"
-    
+    def get_command_signature(self, command: commands.Command, detail=False):
+        if not detail:
+            if not command.signature and not command.parent:
+                return f"`{self.clean_prefix}{command.name}`"
+            if command.signature and not command.parent:
+                return f"`{self.clean_prefix}{command.name}` `{command.signature}`"
+            if not command.signature and command.parent:
+                return f"`    {command.name}`"
+            if command.signature and command.parent:
+                return f"`    {command.name}` `{command.signature}`"
+        else:
+            if not command.signature and not command.parent:
+                return f"`{self.clean_prefix}{command.name}`"
+            if command.signature and not command.parent:
+                return f"`{self.clean_prefix}{command.name}` `{command.signature}`"
+            if not command.signature and command.parent:
+                return f"`{self.clean_prefix}{command.parent} {command.name}`"
+            if command.signature and command.parent:
+                return f"`{self.clean_prefix}{command.parent} {command.name}` `{command.signature}`"
+        
+
     def get_command_aliases(self, command: commands.Command):
         if not command.aliases:
             return ""
@@ -111,7 +124,7 @@ class CustomHelpCommand(commands.HelpCommand):
     async def send_command_help(self, command: commands.Command):
         ctx = self.context
         paginator = EmbedPaginator(
-            title=f"About {self.clean_prefix}{command.qualified_name}",
+            title=f"About [{self.clean_prefix}{command.qualified_name}]",
             footer=f"[{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます]",
             author="Help",
             icon=str(ctx.bot.user.avatar_url),
@@ -119,13 +132,13 @@ class CustomHelpCommand(commands.HelpCommand):
         )
         paginator.new_page()
         if await command.can_run(ctx):
-            s = self.get_command_signature(command)
+            s = self.get_command_signature(command, detail=True)
             a = self.get_command_aliases(command)
             d = self.get_command_help(command)
-            if command.aliases:
-                paginator.add_row_manually(f"{s}    `({a})`", d, page=0)
+            if not a:
+                paginator.content[0]["description"] = f"{s}\n\n{d}"
             else:
-                paginator.add_row_manually(f"{s}", d, page=0)
+                paginator.content[0]["description"] = f"{s}\n\n`{a}`\n\n{d}"
         await paginator.paginate(ctx)
 
     async def send_group_help(self, group):
@@ -138,7 +151,9 @@ class CustomHelpCommand(commands.HelpCommand):
             color=config.theme_color
         )
         paginator.new_page()
-        paginator.content[0]["description"] = ctx.bot.get_command(group.name).help.format(prefix=self.clean_prefix)
+        if group.aliases:
+            paginator.content[0]["description"] = f"`Alias: {', '.join(group.aliases)}`\n\n"
+        paginator.content[0]["description"] += ctx.bot.get_command(group.name).help.format(prefix=self.clean_prefix)
         prev = None
         for c in group.walk_commands():
             if c.name == prev:
