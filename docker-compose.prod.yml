@@ -1,14 +1,12 @@
 version: "3.8"
 services: 
   konoha:
-    build: ./src
+    image: docker.pkg.github.com/shirataki2/konoha/konoha:0.1.0
     tty: true
     working_dir: /workspace/konoha/app
     entrypoint: bash ./entrypoint.sh
     links: 
       - mysql
-    volumes:
-      - ./src:/workspace/konoha
   mysql:
     image: mysql:8.0
     restart: always
@@ -16,8 +14,8 @@ services:
       - ./.env
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - ./src/db/data:/var/lib/mysql
-      - ./src/db/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./src/db/sql:/docker-entrypoint-initdb.d
+      - /var/lib/mysql
+      - /etc/mysql/conf.d/my.cnf
+      - /docker-entrypoint-initdb.d
     ports: 
       - 13306:3306

@@ -15,6 +15,7 @@ colorama = "*"
 tabulate = "*"
 pybooru = "*"
 pytz = "*"
+psutil = "*"
 
 [requires]
 python_version = "3.8"

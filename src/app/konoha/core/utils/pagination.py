@@ -10,15 +10,15 @@ from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
 
 class EmbedPaginator(commands.Paginator):
-    def __init__(self, title="", head_text=[], color=None, image="", thumb="", author="", author_link="", icon="", footer=""):
+    def __init__(self, title="", description="", color=None, image="", thumb="", author="", author_link="", icon="", footer=""):
         super().__init__()
-        self._set_template(title, head_text, color, image, thumb, author, author_link, icon, footer)
-        self.content = { 0: deepcopy(self.page_template) }
+        self._set_template(title, description, color, image, thumb, author, author_link, icon, footer)
+        self.content = {}
 
-    def _set_template(self, title="", head_text=[], color=None, image="", thumb="", author="", author_link="", icon="", footer=""):
+    def _set_template(self, title="", description="", color=None, image="", thumb="", author="", author_link="", icon="", footer=""):
         self.page_template = {
             "title": title,
-            "description": head_text,
+            "description": description,
             "color": color,
             "dict": [],
             "image": image,
@@ -34,12 +34,6 @@ class EmbedPaginator(commands.Paginator):
 
     def new_page(self):
         self.content[len(self.content)] = deepcopy(self.page_template)
-
-    def add_description(self, lines, page=None):
-        if page is None:
-            page = len(self.content) - 1
-        for line in lines:
-            self.content[page]["description"].append(line)
 
     def add_row_manually(self, k, v, inline=False, page=None):
         if page is None:
@@ -64,7 +58,7 @@ class EmbedPaginator(commands.Paginator):
             elif isinstance(c[k], dict):
                 for l in c[k].keys():
                     c[k][l] = c[k][l].replace("$p", str(page+1)).replace("$P", str(len(self.content)))
-        embed = discord.Embed(title=c["title"], description="\n".join(c["description"]))
+        embed = discord.Embed(title=c["title"], description=c["description"])
         embed.color = c["color"] if c["color"] is not None else config.theme_color
         for r in c["dict"]:
             embed.add_field(name=r["k"], value=r["v"], inline=r["inline"])

@@ -30,9 +30,12 @@ class Reminder(commands.Cog):
         # pylint: disable=no-member
         self.notification_task.cancel()
 
-    @commands.group()
+    @commands.group(aliases=["rem"])
     @commands.guild_only()
     async def reminder(self, ctx: commands.Context):
+        '''
+        以下のサブコマンドとともに`{prefix}reminder create`のように実行して下さい
+        '''
         logger.info("'Reminder'コマンドが実行されました")
         logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         if ctx.invoked_subcommand is None:
@@ -45,7 +48,7 @@ class Reminder(commands.Cog):
             embed.add_field(name=f"{p}reminder delete <ID>", value="リマインダーの削除", inline=False)
             return await ctx.send(embed=embed)
 
-    @reminder.command()
+    @reminder.command(aliases=["i"])
     @checks.can_manage_guild()
     @commands.guild_only()
     async def init(self, ctx: commands.Context):
@@ -64,7 +67,7 @@ class Reminder(commands.Cog):
             logger.debug(f"[{ctx.guild.id}] リマインダーリスト変更")
             await ctx.send(f"リマインダーの投稿先を{channel.mention}に変更しました")            
 
-    @reminder.command()
+    @reminder.command(aliases=["c"])
     @commands.guild_only()
     async def create(self, ctx: commands.Context):
         '''
@@ -157,7 +160,7 @@ class Reminder(commands.Cog):
             for message in messages:
                 await message.delete()
 
-    @reminder.command()
+    @reminder.command(aliases=["l"])
     @commands.guild_only()
     async def list(self, ctx: commands.Context):
         '''
@@ -183,7 +186,7 @@ class Reminder(commands.Cog):
             )
         await paginator.paginate(ctx)
 
-    @reminder.command()
+    @reminder.command(aliases=["d"])
     @commands.guild_only()
     async def delete(self, ctx: commands.Context, id: int):
         '''

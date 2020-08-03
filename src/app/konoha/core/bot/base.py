@@ -10,13 +10,14 @@ from typing import List
 import konoha
 import konoha.models.crud as q
 from konoha.core import config
+from konoha.core.commands.help import CustomHelpCommand
 from konoha.core.log.logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
 class BotBase(commands.Bot):
     def __init__(self, *args, **kwargs):
-        super(BotBase, self).__init__(*args, **kwargs)
+        super(BotBase, self).__init__(help_command=CustomHelpCommand() ,*args, **kwargs)
         self.get_all_cogs()
 
     @property 
