@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+"discord.py" = "*"
+discord-py = "*"
+sqlalchemy = "*"
+alembic = "*"
+aiomysql = "*"
+colorama = "*"
+tabulate = "*"
+pybooru = "*"
+pytz = "*"
+
+[requires]
+python_version = "3.8"
