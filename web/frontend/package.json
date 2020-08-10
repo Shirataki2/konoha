@@ -3,18 +3,32 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt-ts",
+    "dev": "nuxt-ts --hostname 0.0.0.0",
     "build": "nuxt-ts build",
     "start": "nuxt-ts start",
     "generate": "nuxt-ts generate",
     "lint:js": "eslint --ext .js,.vue --ignore-path .gitignore .",
-    "lint": "yarn lint:js"
+    "lint:style": "stylelint **/*.{vue,css} --ignore-path .gitignore",
+    "lint": "yarn lint:js && yarn lint:style"
   },
   "dependencies": {
     "@nuxt/content": "^1.5.0",
     "@nuxt/typescript-runtime": "^1.0.0",
     "@nuxtjs/axios": "^5.12.0",
-    "nuxt": "^2.14.0"
+    "@nuxtjs/proxy": "^2.0.1",
+    "@types/cookie": "^0.4.0",
+    "@types/js-cookie": "^2.2.6",
+    "cookie": "^0.4.1",
+    "cookie-universal-nuxt": "^2.1.4",
+    "dayjs": "^1.8.32",
+    "js-cookie": "^2.2.1",
+    "nuxt": "^2.14.0",
+    "querystring": "^0.2.0",
+    "random-js": "^2.1.0",
+    "vue-class-component": "^7.2.5",
+    "vue-property-decorator": "^9.0.0",
+    "vuedraggable": "^2.24.0",
+    "vuex-module-decorators": "^0.17.0"
   },
   "devDependencies": {
     "@nuxt/types": "^2.14.0",
@@ -22,9 +36,16 @@
     "@nuxtjs/eslint-config": "^3.1.0",
     "@nuxtjs/eslint-config-typescript": "^3.0.0",
     "@nuxtjs/eslint-module": "^2.0.0",
+    "@nuxtjs/stylelint-module": "^4.0.0",
     "@nuxtjs/vuetify": "^1.11.2",
     "babel-eslint": "^10.1.0",
     "eslint": "^7.5.0",
-    "eslint-plugin-nuxt": "^1.0.0"
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-nuxt": "^1.0.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.0.5",
+    "stylelint": "^13.6.1",
+    "stylelint-config-prettier": "^8.0.2",
+    "stylelint-config-standard": "^20.0.0"
   }
 }

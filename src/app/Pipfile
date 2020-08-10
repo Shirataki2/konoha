@@ -16,6 +16,7 @@ tabulate = "*"
 pybooru = "*"
 pytz = "*"
 psutil = "*"
+fastapi = {extras = ["all"], version = "*"}
 
 [requires]
 python_version = "3.8"

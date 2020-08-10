@@ -9,6 +9,30 @@ services:
       - mysql
     volumes:
       - ./src:/workspace/konoha
+  api:
+    build: ./src
+    tty: true
+    working_dir: /workspace/konoha/app
+    entrypoint: bash ./entrypoint.api.sh --dev
+    links: 
+      - mysql
+    volumes:
+      - ./src:/workspace/konoha
+    ports:
+      - 8765:8765
+  nuxt:
+    build: ./web/frontend
+    tty: true
+    command: yarn dev
+    env_file:
+      - ./.env
+    environment: 
+      HOST: "0.0.0.0"
+      PORT: "3000"
+    volumes:
+      - ./web/frontend:/app
+    ports:
+      - 3000:3000
   mysql:
     image: mysql:8.0
     restart: always

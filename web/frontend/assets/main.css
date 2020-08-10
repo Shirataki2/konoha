@@ -1,0 +1,23 @@
+.theme--dark.v-btn--active.no-active::before {
+  opacity: 0 !important;
+}
+.theme--dark.v-btn--active.no-active:hover::before {
+  opacity: 0.08 !important;
+}
+
+html {
+  overflow-y: hidden;
+}
+
+html::-webkit-scrollbar{
+  width: 16px;
+}
+
+html::-webkit-scrollbar-track:hover{
+  background: #eee;
+}
+
+html::-webkit-scrollbar-thumb{
+  background: #bbb;
+  border-radius: 8px;
+}

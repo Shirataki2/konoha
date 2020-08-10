@@ -20,3 +20,5 @@ ENV PYTHONBUFFERED=1
 COPY --from=builder /usr/local/bin/alembic /usr/local/bin/alembic
 COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
 COPY . /workspace/konoha
+RUN pip uninstall -y uvicorn
+RUN pip install uvicorn
