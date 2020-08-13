@@ -55,7 +55,7 @@ class Calendar extends Vue {
 
   reminders: Array<any> = []
 
-  loading = false
+  loading = true
 
   first = false
 

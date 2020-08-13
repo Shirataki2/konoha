@@ -14,14 +14,15 @@ from konoha.core.bot.konoha import Konoha
 from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
 
+
 class Reminder(commands.Cog):
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
         self.notifications = [
-            { "color": 0x3a47e4, "before": 24*60, "message": "あと1日で以下のイベントが開始します" },
-            { "color": 0x379717, "before": 6*60, "message": "あと6時間で以下のイベントが開始します" },
-            { "color": 0xf7c417, "before": 60, "message": "あと1時間で以下のイベントが開始します" },
-            { "color": 0xff1717, "before": 0, "message": "以下のイベントが開催されます" },
+            {"color": 0x3a47e4, "before": 24*60, "message": "あと1日で以下のイベントが開始します"},
+            {"color": 0x379717, "before": 6*60, "message": "あと6時間で以下のイベントが開始します"},
+            {"color": 0xf7c417, "before": 60, "message": "あと1時間で以下のイベントが開始します"},
+            {"color": 0xff1717, "before": 0, "message": "以下のイベントが開催されます"},
         ]
         # pylint: disable=no-member
         self.notification_task.start()
@@ -41,11 +42,16 @@ class Reminder(commands.Cog):
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(color=config.theme_color)
             p = await self.bot.get_prefix(ctx.message)
-            embed.set_author(name="Reminder コマンド", icon_url=self.bot.user.avatar_url)
-            embed.add_field(name=f"{p}reminder init", value="メッセージを投稿したチャンネルをリマインダー投稿先に設定", inline=False)
-            embed.add_field(name=f"{p}reminder create", value="新規リマインダーの作成", inline=False)
-            embed.add_field(name=f"{p}reminder list", value="リマインダーの確認", inline=False)
-            embed.add_field(name=f"{p}reminder delete <ID>", value="リマインダーの削除", inline=False)
+            embed.set_author(name="Reminder コマンド",
+                             icon_url=self.bot.user.avatar_url)
+            embed.add_field(
+                name=f"{p}reminder init", value="メッセージを投稿したチャンネルをリマインダー投稿先に設定", inline=False)
+            embed.add_field(name=f"{p}reminder create",
+                            value="新規リマインダーの作成", inline=False)
+            embed.add_field(name=f"{p}reminder list",
+                            value="リマインダーの確認", inline=False)
+            embed.add_field(name=f"{p}reminder delete <ID>",
+                            value="リマインダーの削除", inline=False)
             return await ctx.send(embed=embed)
 
     @reminder.command(aliases=["i"])
@@ -65,7 +71,7 @@ class Reminder(commands.Cog):
             await ctx.send(f"リマインダーの投稿先を{channel.mention}に設定しました")
         else:
             logger.debug(f"[{ctx.guild.id}] リマインダーリスト変更")
-            await ctx.send(f"リマインダーの投稿先を{channel.mention}に変更しました")            
+            await ctx.send(f"リマインダーの投稿先を{channel.mention}に変更しました")
 
     @reminder.command(aliases=["c"])
     @commands.guild_only()
@@ -76,12 +82,14 @@ class Reminder(commands.Cog):
         '''
         logger.info("'Reminder Create' コマンドが実行されました")
         logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
-        def text_checker(message:discord.Message):
+
+        def text_checker(message: discord.Message):
             if len(message.content) > 100:
                 logger.debug(f"[{ctx.guild.id}] 100文字以上の送信が行われました")
                 return False
             return message.author == ctx.author
-        def date_checker(message:discord.Message):
+
+        def date_checker(message: discord.Message):
             txt = message.content
             try:
                 [_, _, _, _, _] = [int(e) for e in txt.split('-')]
@@ -120,7 +128,7 @@ class Reminder(commands.Cog):
             messages.append(await ctx.send(("開催日時を入力してください\n"
                                             "`2020-08-01-15-00`のように年月日時分を`-`区切りで入力してください"
                                             "キャンセルの場合は`9999-99-99-99-99`と送信してください"
-                                           )))
+                                            )))
             message2 = await self.bot.wait_for('message', check=date_checker, timeout=300)
             text = message2.content
             logger.debug(f"[{ctx.guild.id}] 日時: {text}")
@@ -147,7 +155,8 @@ class Reminder(commands.Cog):
                 color=config.theme_color,
                 inline=False
             )
-            embed.add_field(name='日時', value=datetime(y, m, d, H, M, 0, 0).strftime('%Y/%m/%d %H:%M'))
+            embed.add_field(name='日時', value=datetime(
+                y, m, d, H, M, 0, 0).strftime('%Y/%m/%d %H:%M'))
             embed.add_field(name='作成者', value=ctx.author)
             messages.append(message2)
             channel = ctx.guild.get_channel(int(c.channel))
@@ -170,10 +179,11 @@ class Reminder(commands.Cog):
         if await q.Reminder(ctx.guild.id).get_config() is None:
             return await ctx.send((f"リマインダーを表示する前にリマインダーの初期化を行ってください\n"
                                    f"リマインダーを投稿したいチャンネルで`{p}reminder init`を実行してください．"))
-        reminders = await q.Reminder(ctx.guild.id).list()
+        reminders, _ = await q.Reminder(ctx.guild.id).list()
         paginator = EmbedPaginator(title="開催予定のイベント", footer="Page $p / $P")
         if len(reminders) == 0:
             return await ctx.send("開催予定のリマインダーはありません")
+        paginator.new_page()
         for reminder in reminders:
             paginator.add_row(
                 f"{reminder.content}",
@@ -225,7 +235,7 @@ class Reminder(commands.Cog):
                 guild: discord.Guild = await self.bot.fetch_guild(c.guild)
                 channel: discord.TextChannel = await self.bot.fetch_channel(c.channel)
                 embed = discord.Embed(
-                    title=reminder.content, 
+                    title=reminder.content,
                     description=(
                         f"` 開催日時 `: {reminder.start_at.strftime('%Y/%m/%d %H:%M')}\n"
                         f"`  記入者  `: {(await guild.fetch_member(int(reminder.user))).mention}\n"

@@ -4,9 +4,11 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+rope = "*"
+mypy = "*"
 
 [packages]
-"discord.py" = "*"
+"discord.py" = {extras = ["voice"], version = "*"}
 discord-py = "*"
 sqlalchemy = "*"
 alembic = "*"
@@ -17,6 +19,8 @@ pybooru = "*"
 pytz = "*"
 psutil = "*"
 fastapi = {extras = ["all"], version = "*"}
+pynacl = "*"
+youtube-dl = "*"
 
 [requires]
 python_version = "3.8"

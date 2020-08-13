@@ -7,6 +7,7 @@ from fastapi import (
 )
 from aiohttp import ClientSession, ClientResponse
 from typing import List
+from discord import Embed
 
 import konoha.models.crud as q
 from konoha.core import config
@@ -59,6 +60,22 @@ async def get_month_reminders(guild_id: int = Query(...), year: int = Query(2020
 async def new_reminder(guild_id: int = Query(...), authorization: str = Header(...), content: str = Body(...), start_at: str = Body(...)):
     perms, member, guild = await get_auth(authorization, guild_id)
     await q.Reminder(guild_id).create(user=member["user"]["id"], content=content, start_at=start_at)
+    c = await q.Reminder(guild_id).get_config()
+    embed = Embed(title=content, color=config.theme_color, inline=False)
+    embed.add_field(name='日時', value=start_at)
+    embed.add_field(name='作成者', value=f'<@{member["user"]["id"]}>')
+    async with ClientSession() as session:
+        session: ClientSession
+        await session.post(
+            f"{api_base}/channels/{c['channel']}/messages",
+            json={
+                "content": "新規リマインダーが登録されました",
+                "embed": embed.to_dict()
+            },
+            headers={
+                "Authorization": f"Bot {config.bot_token}"
+            }
+        )
     return
 
 
@@ -66,13 +83,47 @@ async def new_reminder(guild_id: int = Query(...), authorization: str = Header(.
 async def update_reminder(guild_id: int = Query(...), reminder_id: int = Query(...), authorization: str = Header(...), content: str = Body(...), start_at: str = Body(...)):
     perms, member, guild = await get_auth(authorization, guild_id)
     await q.Reminder(guild_id).set(reminder_id, content=content, start_at=start_at)
+    c = await q.Reminder(guild_id).get_config()
+    embed = Embed(title=content, color=config.theme_color, inline=False)
+    embed.add_field(name='日時', value=start_at)
+    embed.add_field(name='編集者', value=f'<@{member["user"]["id"]}>')
+    async with ClientSession() as session:
+        session: ClientSession
+        await session.post(
+            f"{api_base}/channels/{c['channel']}/messages",
+            json={
+                "content": "リマインダーが変更されました",
+                "embed": embed.to_dict()
+            },
+            headers={
+                "Authorization": f"Bot {config.bot_token}"
+            }
+        )
     return
 
 
 @app.delete("/reminder", status_code=204)
 async def delete_reminder(guild_id: int = Query(...), reminder_id: int = Query(...), authorization: str = Header(...)):
     perms, member, guild = await get_auth(authorization, guild_id)
+    reminder = await q.Reminder(guild_id).get(reminder_id)
     await q.Reminder(guild_id).delete(reminder_id)
+    c = await q.Reminder(guild_id).get_config()
+    embed = Embed(title=reminder["content"],
+                  color=config.theme_color, inline=False)
+    embed.add_field(name='日時', value=reminder["start_at"])
+    embed.add_field(name='編集者', value=f'<@{member["user"]["id"]}>')
+    async with ClientSession() as session:
+        session: ClientSession
+        await session.post(
+            f"{api_base}/channels/{c['channel']}/messages",
+            json={
+                "content": "リマインダーが削除されました",
+                "embed": embed.to_dict()
+            },
+            headers={
+                "Authorization": f"Bot {config.bot_token}"
+            }
+        )
     return
 
 

@@ -69,16 +69,29 @@
           outlined
           color="primary"
           :loading="loading"
+          :disabled="deleteLoading"
           @click="submit"
         >
           <strong>保存</strong>
+        </v-btn>
+        <v-btn
+          v-if="index >= 0"
+          block
+          outlined
+          color="error"
+          class="mt-4"
+          :loading="deleteLoading"
+          :disabled="loading"
+          @click="remove"
+        >
+          <strong>削除</strong>
         </v-btn>
         <v-btn
           block
           outlined
           color="error"
           class="mt-4"
-          :disabled="loading"
+          :disabled="loading || deleteLoading"
           @click="cancel"
         >
           <strong>キャンセル</strong>
@@ -124,6 +137,7 @@ class Dialog extends Vue {
   name: string = ''
 
   loading = false
+  deleteLoading = false
 
   dateMenu = false
   timeMenu = false
@@ -222,6 +236,35 @@ class Dialog extends Vue {
 
   cancel() {
     this.dialog = false
+  }
+
+  async remove() {
+    const id = this.reminder ? this.reminder.id : this.reminders[this.index].id
+    const module = getModule(NotificationModule, this.$store)
+    this.deleteLoading = true
+    if (confirm('このリマインダーを削除しますか？')) {
+      try {
+        await this.$axios.delete('/local_api/reminder', {
+          params: {
+            guild_id: this.guild?.id,
+            reminder_id: id,
+          },
+        })
+        module.setSnackBarContent({
+          content: '正常に削除しました',
+          color: 'success',
+        })
+        this.dialog = false
+        await this.$emit('update')
+      } catch {
+        module.setSnackBarContent({
+          content: '申し訳ありませんが削除に失敗しました',
+          color: 'error',
+        })
+      }
+      module.fireSnackBar()
+    }
+    this.deleteLoading = false
   }
 }
 export default Dialog

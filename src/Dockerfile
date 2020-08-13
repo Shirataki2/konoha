@@ -22,3 +22,4 @@ COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python
 COPY . /workspace/konoha
 RUN pip uninstall -y uvicorn
 RUN pip install uvicorn
+RUN apt install -y ffmpeg
