@@ -67,7 +67,7 @@ class VC:
         self.server_id = '705052322761277540'
         self.channel_id = '705052323335897180'
         self.user_id = '740158924476645396'
-        self.bot_token = 'NzQwMTU4OTI0NDc2NjQ1Mzk2.Xyk8tw.ED6y8PAcpi6gFOI0vQlNC9FEWsM'
+        self.bot_token = ''
 
     async def heartbeat(self, ms):
         while True:
