@@ -15,6 +15,7 @@ class Config:
     danbooru_key: str = ""
     oauth2_url: str = ""
     theme_color: int = 0xff0000
+    log_channel: str = ""
 
     def __init__(self, ini_file_path: str) -> None:
         parser = ConfigParser()

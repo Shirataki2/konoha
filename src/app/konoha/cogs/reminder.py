@@ -16,6 +16,9 @@ logger = get_module_logger(__name__)
 
 
 class Reminder(commands.Cog):
+    '''
+    指定時間にイベントを通知する機能です
+    '''
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
         self.notifications = [
@@ -37,8 +40,6 @@ class Reminder(commands.Cog):
         '''
         以下のサブコマンドとともに`{prefix}reminder create`のように実行して下さい
         '''
-        logger.info("'Reminder'コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(color=config.theme_color)
             p = await self.bot.get_prefix(ctx.message)
@@ -62,8 +63,6 @@ class Reminder(commands.Cog):
         リマインダーの投稿先を設定します
         このコマンドの投げられたチャンネルがリマインダーの投稿先になります
         '''
-        logger.info("'Reminder Init'コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         guild: discord.Guild = ctx.guild
         channel: discord.TextChannel = ctx.channel
         if (await q.Reminder(guild.id).update_config(channel.id)) == "create":
@@ -80,9 +79,6 @@ class Reminder(commands.Cog):
         リマインダーを作成します
         このコマンドの実行後に幾つかの質問を行い，双方向的に作成します．
         '''
-        logger.info("'Reminder Create' コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
-
         def text_checker(message: discord.Message):
             if len(message.content) > 100:
                 logger.debug(f"[{ctx.guild.id}] 100文字以上の送信が行われました")
