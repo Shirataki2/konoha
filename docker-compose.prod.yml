@@ -1,12 +1,40 @@
 version: "3.8"
 services: 
   konoha:
-    image: docker.pkg.github.com/shirataki2/konoha/konoha:0.1.0
+    build: ./src
     tty: true
     working_dir: /workspace/konoha/app
-    entrypoint: bash ./entrypoint.sh
+    entrypoint: bash ./entrypoint.sh --prod
     links: 
       - mysql
+    volumes:
+      - ./src:/workspace/konoha
+  api:
+    build: ./src
+    tty: true
+    working_dir: /workspace/konoha/app
+    entrypoint: bash ./entrypoint.api.sh
+    links: 
+      - mysql
+    volumes:
+      - ./src:/workspace/konoha
+    ports:
+      - 9876:8765
+  nuxt:
+    build:
+      dockerfile: Prod.Dockerfile
+      context: ./web/frontend
+    tty: true
+    command: yarn start
+    env_file:
+      - ./.env
+    environment: 
+      HOST: "0.0.0.0"
+      PORT: "6060"
+    volumes:
+      - ./web/frontend:/app
+    ports:
+      - 6060:6060
   mysql:
     image: mysql:8.0
     restart: always
