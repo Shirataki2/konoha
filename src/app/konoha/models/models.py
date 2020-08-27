@@ -9,6 +9,7 @@ guild = Table(
     Column("id", String(64), nullable=False, primary_key=True),
     Column("prefix", String(255), server_default=">", nullable=False),
     Column("gc_channel", String(255), nullable=True),
+    Column("comment", String(255), nullable=True),
 )
 
 hook = Table(

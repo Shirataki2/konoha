@@ -83,8 +83,8 @@ export default {
    */
   axios: {
     proxy: true,
-    baseUrl: 'http://192.168.10.19',
-    browserBaseUrl: 'http://192.168.10.19',
+    baseUrl: 'https://konoha.chomama.jp',
+    browserBaseUrl: 'https://konoha.chomama.jp',
   },
   /*
    ** Content module configuration
@@ -93,6 +93,7 @@ export default {
   content: {},
   env: {
     oauth2_url: process.env.OAUTH2_URL || '',
+    bot_url: process.env.BOT_URL || '',
     bot_id: process.env.BOT_ID || '',
     bot_secret: process.env.BOT_SECRET || '',
     bot_redirect_uri: process.env.BOT_REDIRECT_URI || '',

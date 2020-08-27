@@ -138,7 +138,7 @@ class Index extends Vue {
   onGuildClicked(guild: Guild) {
     if (!guild.joined) {
       window.open(
-        `${process.env.oauth2_url}&guild_id=${guild.id}`,
+        `${process.env.bot_url}&guild_id=${guild.id}`,
         'Discord',
         'menubar=no,location=no,resizable=no,scrollbar=no,width=500,height=700'
       )

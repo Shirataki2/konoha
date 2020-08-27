@@ -44,9 +44,7 @@ import { Vue, Component } from 'vue-property-decorator'
 class AppHeader extends Vue {
   drawer = false
 
-  oauth2Url =
-    'https://discord.com/api/oauth2/authorize?client_id=740158924476645396&redirect_uri=http%3A%2F%2F192.168.10.19%3A3000%2Fcallback&response_type=code&scope=identify%20guilds%20email'
-
+  oauth2Url = process.env.oauth2_url || '/'
   get isLogin() {
     return this.$store.getters['auth/user'] !== null
   }
