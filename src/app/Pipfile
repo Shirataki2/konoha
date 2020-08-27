@@ -21,6 +21,7 @@ psutil = "*"
 fastapi = {extras = ["all"], version = "*"}
 pynacl = "*"
 youtube-dl = "*"
+pydub = "*"
 
 [requires]
 python_version = "3.8"

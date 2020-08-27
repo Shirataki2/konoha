@@ -147,18 +147,16 @@ class VoiceState:
                     return
             self.cur: Song
             source = self.cur.get_source()
-            print(source)
             source.volume = self.volume
             self.vc.play(source, after=self.play_next)
             await self.cur.ctx.channel.send(embed=self.cur.to_embed())
-            print(self.vc.is_playing())
             await self.play.wait()
 
     def play_next(self, err=None):
         if err:
             raise MusicException(str(err))
         if self.loop_queue and self.cur:
-            self.queue.put(self.cur)
+            self.queue.put_nowait(self.cur)
         self.play.set()
 
     async def stop(self):

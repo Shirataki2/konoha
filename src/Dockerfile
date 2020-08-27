@@ -14,6 +14,7 @@ RUN apt update -y && \
     npm install -g n && \
     n stable && \
     apt purge -y nodejs npm && \
+    apt install -y ffmpeg && \
     apt autoremove -y
 RUN npm install -g nodemon
 ENV PYTHONBUFFERED=1
@@ -22,4 +23,3 @@ COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python
 COPY . /workspace/konoha
 RUN pip uninstall -y uvicorn
 RUN pip install uvicorn
-RUN apt install -y ffmpeg

@@ -22,7 +22,12 @@ from konoha.core.commands import checks
 from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
 
+
 class Administrator(commands.Cog):
+    """
+    Bot管理用のコマンド
+    """
+
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
 
@@ -33,10 +38,8 @@ class Administrator(commands.Cog):
         '''
         Cogを再読み込みします
         '''
-        logger.warn("'Reload' コマンドが実行されました")
         self.bot.get_all_cogs(True)
         await ctx.send('Cogの再読み込みが終了しました')
-
 
     @commands.is_owner()
     @commands.command()
@@ -44,9 +47,7 @@ class Administrator(commands.Cog):
         '''
         データベースのマイグレーションを行います
         '''
-        logger.warn("'Migrate' コマンドが実行されました")
         alembic_path = Path(os.path.abspath(konoha.__file__)).parent / "models"
-        print(alembic_path)
         proc = subprocess.run(
             (
                 f'cd {alembic_path};'
@@ -58,11 +59,32 @@ class Administrator(commands.Cog):
             stderr=subprocess.PIPE,
             text=True
         )
+        description = ""
+        if proc.stdout:
+            description += f"**stdout >**\n```\n{proc.stdout}\n```"
+        if proc.stderr:
+            description += f"**stderr >**\n```\n{proc.stderr}\n```"
         for l in proc.stdout.split("\n"):
             logger.info(l)
         for l in proc.stderr.split("\n"):
             logger.warn(l)
         await ctx.send('マイグレーションが終了しました')
+        if description:
+            await ctx.send(description)
+
+    @commands.is_owner()
+    @commands.command()
+    async def add_user_as(self, ctx: commands.Context, user: discord.User, role: str):
+        '''
+        ユーザーを指定した役職へ任命します
+        '''
+        if user is None:
+            return await ctx.send(f"Userが見つかりません")
+        if await q.User(user.id).get():
+            await q.User(user.id).set(**{role: True})
+        else:
+            await q.User.create(user.id, **{role: True})
+        await ctx.message.add_reaction('✅')
 
     @commands.is_owner()
     @commands.command()
@@ -70,17 +92,36 @@ class Administrator(commands.Cog):
         '''
         生のSQLを実行します
         '''
-        logger.warn("'SQL' コマンドが実行されました")
-        logger.info(f"\t{query}")
         async with q.DB() as db:
             result = await db.execute(query)
             try:
                 data = await result.fetchall()
-                table = tabulate.tabulate([r.as_tuple() for r in data], headers=data[0].keys(), tablefmt="fancy_grid")
+                table = tabulate.tabulate(
+                    [r.as_tuple() for r in data], headers=data[0].keys(), tablefmt="fancy_grid")
                 return await ctx.send(f"```\n{table}\n```")
             except aiomysql.sa.ResourceClosedError:
                 return await ctx.send(f"正常に実行されました")
 
+    @commands.is_owner()
+    @commands.command(aliases=["e"])
+    async def error_log(self, ctx: commands.Context, id: str):
+        '''
+        エラーログを取得します
+        '''
+        error = await q.Error(id).get()
+        if error:
+            embed = discord.Embed(title=error.name, color=0xff0000)
+            embed.set_author(
+                name=f"Error: {error.id}", icon_url=self.bot.user.avatar_url)
+            embed.description = f"**Traceback**\n```python\n{error.traceback}\n```"
+            embed.add_field(name="サーバー", value=f"{error.guild}")
+            embed.add_field(name="チャンネル", value=f"{error.channel}")
+            embed.add_field(name="投稿者", value=f"{error.user}")
+            embed.add_field(
+                name="詳細", value=f"```\n{error.detail}\n```", inline=False)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("該当のエラーはありません")
 
     def render_percent(self, p, preline=None, postline=None):
         if p < 50:
@@ -120,14 +161,15 @@ class Administrator(commands.Cog):
                 return f"{byte / (1024 ** 4):7.2f} TB"
             else:
                 return f"{byte / (1024 ** 5):7.2f} PB"
+
         def to_T(s):
             s = int(s)
             if s < 120:
                 return f"{s:3d} 秒"
             elif s < 60 * 120:
-                return f"{s // 60:3d} 分"
+                return f"{s // 60:3d} 分 {s:3d} 秒"
             elif s < 60 * 60 * 24 * 2:
-                return f"{s // (60*60):2d} 時間"
+                return f"{s // (60*60):2d} 時間 {s // 60:3d} 分 {s:3d} 秒"
             elif s < 60 * 60 * 24 * 365:
                 return f"{s // (60*60*24):3d} 日 {(s % (60*60*24)) // 3600:2d} 時間"
             else:
@@ -142,7 +184,8 @@ class Administrator(commands.Cog):
         cpu = psutil.cpu_percent()
         paginator.add_row_manually("CPU", self.render_percent(cpu), page=p)
         for i, cpu in enumerate(psutil.cpu_percent(percpu=True)):
-            paginator.add_row_manually(f"CPU #{i}", self.render_percent(cpu), page=p)
+            paginator.add_row_manually(
+                f"CPU #{i}", self.render_percent(cpu), page=p)
         # Memory
         paginator.new_page()
         p = 1

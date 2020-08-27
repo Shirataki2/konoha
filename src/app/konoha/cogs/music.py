@@ -3,18 +3,38 @@ from discord.ext import commands, tasks
 
 import asyncio
 import aiohttp
+import secrets
+import os
 from typing import Dict, List
 
 import konoha.models.crud as q
 from konoha.core import config
+from konoha.core.commands import checks
 from konoha.core.bot.konoha import Konoha
 from konoha.core.log.logger import get_module_logger
 from konoha.extensions.music import VoiceState, YTDLDownloader, Video, Song
+from konoha.extensions.voice_client import ExtendedVoiceClient
 
 logger = get_module_logger(__name__)
 
 
 class Music(commands.Cog):
+    """
+    音楽の再生を行います
+
+    再生のためには以下の手順を踏みます
+
+    1. **ボイスチャットに入室する**
+
+    2. **{{prefix}join` コマンドを実行する**
+
+    3. **`{prefix}play 曲名` コマンドで曲を検索する**
+
+    4. **所望の曲の番号を選択しよう！**
+
+    5. **YoutubeのURLを直接入力することでも再生可能です**
+    """
+
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
         self.voice_states: Dict[str, VoiceState] = {}
@@ -36,6 +56,7 @@ class Music(commands.Cog):
         ctx.vs = self.get_voice_state(ctx)
 
     @commands.command(invoked_subcommand=True)
+    @commands.guild_only()
     async def join(self, ctx: commands.Context):
         '''
         Botがボイスチャンネルに参加します
@@ -46,10 +67,10 @@ class Music(commands.Cog):
         ch = ctx.author.voice.channel
         if ctx.vs.vc:
             return await ctx.vs.vc.move_to(ch)
-        ctx.vs.vc = await ch.connect()
-        print(ctx.vs.vc)
+        ctx.vs.vc = ExtendedVoiceClient(await ch.connect())
 
     @commands.command()
+    @commands.guild_only()
     async def leave(self, ctx: commands.Context):
         '''
         Botを退出させてプレイリストを空にします
@@ -60,6 +81,7 @@ class Music(commands.Cog):
         del self.voice_states[ctx.guild.id]
 
     @commands.command()
+    @commands.guild_only()
     async def volume(self, ctx: commands.Context, *, volume: int):
         '''
         再生ボリューム変更します
@@ -72,12 +94,14 @@ class Music(commands.Cog):
         return await ctx.send(f'ボリュームを **{volume}%** に変更しました')
 
     @commands.command()
+    @commands.guild_only()
     async def pause(self, ctx: commands.Context):
         if ctx.vs.is_playing and ctx.vs.vc.is_playing():
             ctx.vs.vc.pause()
             await ctx.message.add_reaction('⏸')
 
     @commands.command()
+    @commands.guild_only()
     async def resume(self, ctx: commands.Context):
         if not ctx.vs.is_playing and not ctx.vs.vc.is_playing():
             ctx.vs.vc.pause()
@@ -101,7 +125,7 @@ class Music(commands.Cog):
             ])
         while True:
             try:
-                reaction, user = await ctx.bot.wait_for("reaction_add", timeout=30, check=check_reaction)
+                reaction, _ = await ctx.bot.wait_for("reaction_add", timeout=30, check=check_reaction)
             except asyncio.TimeoutError:
                 for emoji in emojis:
                     await message.clear_reaction(emoji)
@@ -112,6 +136,7 @@ class Music(commands.Cog):
                     return i
 
     @commands.command()
+    @commands.guild_only()
     async def play(self, ctx: commands.Context, *, query):
         '''
         与えられたクエリから曲を検索してプレイリストに追加します
@@ -133,6 +158,47 @@ class Music(commands.Cog):
         await ctx.send("曲を追加しました", embed=embed)
 
     @commands.command()
+    @checks.can_manage_message()
+    @commands.guild_only()
+    async def rec(self, ctx: commands.Context):
+        '''
+        最大30秒間，ボイスチャンネルを録音します
+        '''
+        if not ctx.vs.vc:
+            await ctx.invoke(self.join)
+        if not ctx.vs.vc.ws.is_receiving:
+            self.fp = secrets.token_hex(6) + '.mp3'
+            ctx.vs.vc.ws.start_receive(self.fp)
+            await ctx.send("録音を開始しました")
+            await asyncio.sleep(30)
+            await ctx.invoke(self.recstop)
+
+    @commands.command()
+    @checks.can_manage_message()
+    @commands.guild_only()
+    async def recstop(self, ctx: commands.Context):
+        '''
+        録音を停止します
+        '''
+        if ctx.vs.vc.ws.is_receiving:
+            ctx.vs.vc.ws.stop_receive()
+            await ctx.send("録音を終了します")
+            await ctx.vs.vc.ws.decoder.decoded.wait()
+            await ctx.send(file=discord.File(self.fp))
+            os.remove(self.fp)
+
+    @rec.error
+    @recstop.error
+    async def on_rec_error(self, ctx: commands.Context, error: Exception):
+        if isinstance(error, commands.errors.CheckFailure):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "権限がありません",
+                f"`{ctx.command.name}`を実行するにはメッセージ管理の権限が必要です"
+            )
+
+    @commands.command()
+    @commands.guild_only()
     async def stop(self, ctx: commands.Context):
         '''
         曲の再生を止めプレイリストを空にします
@@ -143,6 +209,7 @@ class Music(commands.Cog):
             await ctx.message.add_reaction('⏹')
 
     @commands.command()
+    @commands.guild_only()
     async def skip(self, ctx: commands.Context):
         """
         曲をスキップさせます
@@ -154,6 +221,7 @@ class Music(commands.Cog):
         return await ctx.message.add_reaction('⏭')
 
     @commands.command(aliases=["playlist"])
+    @commands.guild_only()
     async def queue(self, ctx: commands.Context):
         """
         再生リストを表示します
@@ -165,6 +233,7 @@ class Music(commands.Cog):
             await ctx.send("現在プレイリストに曲はありません")
 
     @commands.command()
+    @commands.guild_only()
     async def shuffle(self, ctx: commands.Context):
         """
         再生リストをシャッフルします
@@ -177,6 +246,7 @@ class Music(commands.Cog):
         await ctx.message.add_reaction('✅')
 
     @commands.command()
+    @commands.guild_only()
     async def remove(self, ctx: commands.Context, index: int):
         """
         指定したインデックスの曲をプレイリストから削除します
@@ -189,6 +259,7 @@ class Music(commands.Cog):
         await ctx.message.add_reaction('✅')
 
     @commands.command()
+    @commands.guild_only()
     async def loop(self, ctx: commands.Context):
         """
         現在再生中の曲をループします
@@ -201,6 +272,7 @@ class Music(commands.Cog):
         await ctx.send(f'ループを{"有" if ctx.vs.loop else "無"}効にしました')
 
     @commands.command()
+    @commands.guild_only()
     async def loop_queue(self, ctx: commands.Context):
         """
         プレイリスト内の曲目をループし続けます
@@ -214,13 +286,16 @@ class Music(commands.Cog):
 
     @join.before_invoke
     @play.before_invoke
+    @rec.before_invoke
     async def ensure_voice_state(self, ctx: commands.Context):
         if not ctx.author.voice or not ctx.author.voice.channel:
-            raise commands.CommandError('ボイスチャンネルに参加していません')
+            await ctx.send('ボイスチャンネルに入室した後に実行してください')
+            raise Exception
 
         if ctx.voice_client:
             if ctx.voice_client.channel != ctx.author.voice.channel:
-                raise commands.CommandError('既に入室しています')
+                await ctx.send('既に入室しています')
+                raise Exception
 
 
 def setup(bot):

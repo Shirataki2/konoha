@@ -6,7 +6,8 @@ from typing import List
 from konoha.core import config
 from konoha.core.utils.pagination import EmbedPaginator
 
-class CustomHelpCommand(commands.HelpCommand): 
+
+class CustomHelpCommand(commands.HelpCommand):
     def __init__(self):
         super(CustomHelpCommand, self).__init__(command_attrs={
             "help": "コマンドに関するヘルプを表示します"
@@ -31,7 +32,6 @@ class CustomHelpCommand(commands.HelpCommand):
                 return f"`{self.clean_prefix}{command.parent} {command.name}`"
             if command.signature and command.parent:
                 return f"`{self.clean_prefix}{command.parent} {command.name}` `{command.signature}`"
-        
 
     def get_command_aliases(self, command: commands.Command):
         if not command.aliases:
@@ -50,14 +50,14 @@ class CustomHelpCommand(commands.HelpCommand):
             return "このコマンドの説明はありません"
         else:
             return command.help.format(prefix=self.clean_prefix)
-    
+
     async def send_bot_help(self, mapping):
         ctx = self.context
         bot = ctx.bot
         cogs = list(bot.cogs)
         cogs.sort()
         paginator = EmbedPaginator(
-            footer=f"[{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます]",
+            footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",
             author="Help | Page $p / $P",
             icon=str(ctx.bot.user.avatar_url),
             color=config.theme_color
@@ -66,14 +66,25 @@ class CustomHelpCommand(commands.HelpCommand):
         for cog_name in cogs:
             cog = bot.get_cog(cog_name)
             commands = [command for command in await self.filter_commands(bot.commands)]
-            runnables = [c for c in cog.walk_commands() if await c.can_run(ctx) and not c.hidden]
+            runnables = []
+            for c in cog.walk_commands():
+                try:
+                    if await c.can_run(ctx) and not c.hidden:
+                        runnables.append(c)
+                except:
+                    continue
             if len(runnables) == 0:
                 continue
             i += 1
             prev = None
             paginator.new_page()
-            paginator.content[i]["title"] = f"About [{cog.qualified_name}]"
-            paginator.content[i]["description"] = cog.description
+            paginator.content[i]["title"] = f"Category: {cog.qualified_name}"
+            if cog.description:
+                paginator.content[i]["description"] = cog.description \
+                                                         .split('\n')[0] \
+                                                         .format(prefix=self.clean_prefix)
+            else:
+                paginator.content[i]["description"] = None
             cog: commands.Cog
             for c in runnables:
                 if c.name == prev:
@@ -83,7 +94,8 @@ class CustomHelpCommand(commands.HelpCommand):
                     d = self.get_command_description(c)
                     a = self.get_command_aliases(c)
                     if c.aliases:
-                        paginator.add_row_manually(f"{s}    `({a})`", d, page=i)
+                        paginator.add_row_manually(
+                            f"{s}    `({a})`", d, page=i)
                     else:
                         paginator.add_row_manually(f"{s}", d, page=i)
                 except:
@@ -95,14 +107,15 @@ class CustomHelpCommand(commands.HelpCommand):
         ctx = self.context
         commands = [command for command in await self.filter_commands(cog.walk_commands())]
         paginator = EmbedPaginator(
-            title=f"About [{cog.qualified_name}]",
-            footer=f"[{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます]",
+            title=f"Category: {cog.qualified_name}",
+            footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",
             author="Help",
             icon=str(ctx.bot.user.avatar_url),
             color=config.theme_color
         )
         paginator.new_page()
-        paginator.content[0]["description"] = cog.description
+        paginator.content[0]["description"] = cog.description.format(
+            prefix=self.clean_prefix)
         prev = None
         for c in commands:
             if c.name == prev:
@@ -113,7 +126,8 @@ class CustomHelpCommand(commands.HelpCommand):
                     a = self.get_command_aliases(c)
                     d = self.get_command_description(c)
                     if c.aliases:
-                        paginator.add_row_manually(f"{s}    `({a})`", d, page=0)
+                        paginator.add_row_manually(
+                            f"{s}    `({a})`", d, page=0)
                     else:
                         paginator.add_row_manually(f"{s}", d, page=0)
             except:
@@ -124,8 +138,8 @@ class CustomHelpCommand(commands.HelpCommand):
     async def send_command_help(self, command: commands.Command):
         ctx = self.context
         paginator = EmbedPaginator(
-            title=f"About [{self.clean_prefix}{command.qualified_name}]",
-            footer=f"[{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます]",
+            title=f"Command: {self.clean_prefix}{command.qualified_name}",
+            footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",
             author="Help",
             icon=str(ctx.bot.user.avatar_url),
             color=config.theme_color
@@ -145,7 +159,7 @@ class CustomHelpCommand(commands.HelpCommand):
         ctx = self.context
         paginator = EmbedPaginator(
             title=group.name,
-            footer=f"[{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます]",
+            footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",
             author="Help",
             icon=str(ctx.bot.user.avatar_url),
             color=config.theme_color
@@ -153,7 +167,8 @@ class CustomHelpCommand(commands.HelpCommand):
         paginator.new_page()
         if group.aliases:
             paginator.content[0]["description"] = f"`Alias: {', '.join(group.aliases)}`\n\n"
-        paginator.content[0]["description"] += ctx.bot.get_command(group.name).help.format(prefix=self.clean_prefix)
+        paginator.content[0]["description"] += ctx.bot.get_command(
+            group.name).help.format(prefix=self.clean_prefix)
         prev = None
         for c in group.walk_commands():
             if c.name == prev:
@@ -171,8 +186,8 @@ class CustomHelpCommand(commands.HelpCommand):
 
     async def command_not_found(self, string):
         embed = discord.Embed(title='コマンドが見つかりませんでした',
-                        description=f'**Error 404:** "{string}" という名のコマンドは存在しません',
-                        color=0xff0000)
+                              description=f'"{string}" という名のコマンドは存在しません',
+                              color=0xff0000)
         await self.context.send(embed=embed)
 
     async def send_error_message(self, error):

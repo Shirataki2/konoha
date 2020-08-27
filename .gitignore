@@ -1,5 +1,8 @@
 .env
 **/db
+**/versions/*.py
 **/__pycache__
 config.ini
 alembic.ini
+*.mp3
+*.wav

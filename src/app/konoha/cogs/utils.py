@@ -18,13 +18,19 @@ from konoha.core.commands import checks
 from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
 
+
 async def get_duration(coro, *args, **kwargs):
     start = perf_counter()
     ret = await coro(*args, **kwargs)
     end = perf_counter()
     return (end - start) * 1000, ret
 
+
 class Utils(commands.Cog):
+    '''
+    ほかのカテゴリには属さないような便利機能です
+    '''
+
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
 
@@ -32,54 +38,93 @@ class Utils(commands.Cog):
     async def ping(self, ctx: commands.Context):
         '''
         通信遅延を計測します
+
+        __**Websocket遅延**__
+        Discordと双方向通信する際に使われる回線の遅延です
+
+        __**API通信遅延**__
+        Discordから情報を得るためのAPIサーバーの遅延です
+
+        __**メッセージ送信遅延**__
+        当BotからDIscordクライアントにメッセージを送信するのにかかる遅延です 
         '''
-        logger.info("'Ping'コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         discord_dur, _ = await get_duration(
             self.bot.session.get, "https://discord.com/"
         )
-        embed = discord.Embed(color=config.theme_color).set_author(name="⏳計測中...")
+        embed = discord.Embed(
+            color=config.theme_color).set_author(name="⏳計測中...")
         message_dur, message = await get_duration(
             ctx.send, embed=embed
         )
         embed.set_author(name='🏓 Pong!', icon_url=self.bot.user.avatar_url)
         embed.description = f"{self.bot.user.mention}は正常稼働中です"
-        embed.add_field(name="Websocket遅延", value=f"{self.bot.latency * 1000:.2f} ms")
+        embed.add_field(name="Websocket遅延",
+                        value=f"{self.bot.latency * 1000:.2f} ms")
         embed.add_field(name="API通信遅延", value=f"{discord_dur:.2f} ms")
         embed.add_field(name="メッセージ送信遅延", value=f"{message_dur:.2f} ms")
         await message.edit(embed=embed)
-            
+
     @commands.command()
+    @commands.guild_only()
     @checks.can_manage_guild()
-    async def prefix(self, ctx: commands.Context, prefix: str):
+    @checks.user("moderator")
+    async def prefix(self, ctx: commands.Context, prefix: str = None):
         '''
         Botを呼び出すための接頭文字(Prefix)を変更します
+
+        引数`prefix`は8文字以下で設定してください
+
+        prefixに何も指定しない場合は現在のPrefixを返します
+
+        例えば prefix が `$`であればコマンドは`$ping`のようにして呼び出すことができます．
         '''
-        logger.info("'Prefix' コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
-        if prefix:
-            if len(prefix) > 8:
-                return await ctx.send("prefixは8文字以内である必要があります")
-            logger.debug(f"\t変更後のPrefix: {prefix}")
-            await q.Guild(ctx.guild.id).set(prefix=prefix)
+        if prefix is None:
+            guild = await q.Guild(ctx.guild.id).get(verbose=0)
+            return await ctx.send(f"このサーバーのPrefixは`{guild.prefix}`です！")
+        if len(prefix) > 8:
+            return await self.bot.send_error(
+                ctx,
+                "引数が長過ぎます",
+                "Prefixは8文字以下である必要があります．"
+            )
+        logger.debug(f"\t変更後のPrefix: {prefix}")
+        await q.Guild(ctx.guild.id).set(prefix=prefix)
         embed = discord.Embed(color=config.theme_color)
         embed.set_author(name='Prefix変更', icon_url=self.bot.user.avatar_url)
         embed.description = f"{self.bot.user.mention}のPrefixを`{prefix}`に変更しました"
         await ctx.send(embed=embed)
 
+    @prefix.error
+    async def on_prefix_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.errors.MissingRequiredArgument):
+            ctx.handled = True
+            return await self.bot.send_error(
+                ctx, "引数が不足しています",
+                "接頭文字に相当する文字を引数に入力してください"
+            )
+        if isinstance(error, commands.errors.CheckFailure):
+            ctx.handled = True
+            return await self.bot.send_error(
+                ctx, "実行権限がありません",
+                "接頭文字を変更するにはサーバー管理の権限が必要です"
+            )
+        raise error
+
     @commands.command()
     async def invite(self, ctx: commands.Context):
         '''
         Bot招待用のURLを表示します
+
+        このURL先にアクセスするとBotをあなたのサーバーに招待する画面へと移行します．
         '''
-        logger.info("'Invite' コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         return await ctx.send(f"{config.oauth2_url}")
 
     @commands.command()
     async def timer(self, ctx: commands.Context, seconds: float):
         '''
         指定した秒数後にあなた宛てにメンションを送信します
+
+        ただし，3時間以上の秒数を指定することはできません．
         '''
         if seconds < 0:
             return await ctx.send("負の時間待たせるとはどういうことなのでしょう(哲学)")
@@ -89,21 +134,22 @@ class Utils(commands.Cog):
         await asyncio.sleep(seconds)
         await ctx.send(f"{ctx.author.mention} {seconds:.1f}秒間経過しました!")
 
-
     @commands.command()
     @commands.guild_only()
     async def guild(self, ctx: commands.Context):
         '''
         ギルド(サーバー)に関する情報を表示します
         '''
-        logger.info("'Guild' コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         guild: discord.Guild = ctx.guild
         members = guild.members
-        onlines = len(list(filter(lambda m:m.status==discord.Status.online,members)))
-        idles = len(list(filter(lambda m:m.status==discord.Status.idle,members)))
-        dnds = len(list(filter(lambda m:m.status==discord.Status.dnd,members)))
-        offlines = len(list(filter(lambda m:m.status==discord.Status.offline,members)))
+        onlines = len(
+            list(filter(lambda m: m.status == discord.Status.online, members)))
+        idles = len(
+            list(filter(lambda m: m.status == discord.Status.idle, members)))
+        dnds = len(
+            list(filter(lambda m: m.status == discord.Status.dnd, members)))
+        offlines = len(
+            list(filter(lambda m: m.status == discord.Status.offline, members)))
         emo_on = self.bot.get_emoji(706276692465025156)
         emo_id = self.bot.get_emoji(706276692678934608)
         emo_dn = self.bot.get_emoji(706276692674609192)
@@ -115,8 +161,10 @@ class Utils(commands.Cog):
         embed.add_field(name='オーナー', value=f'{guild.owner.mention}')
         embed.add_field(name='テキストチャンネル数', value=f'{len(guild.text_channels)}')
         embed.add_field(name='ボイスチャンネル数', value=f'{len(guild.voice_channels)}')
-        embed.add_field(name='メンバー', value=f'{len(members)}\n{emo_on} {onlines} {emo_id} {idles} {emo_dn} {dnds} {emo_of} {offlines}', inline=False)
-        embed.set_footer(text=f'作成: {guild.created_at.strftime("%Y/%m/%d %H:%M:%S")}')
+        embed.add_field(
+            name='メンバー', value=f'{len(members)}\n{emo_on} {onlines} {emo_id} {idles} {emo_dn} {dnds} {emo_of} {offlines}', inline=False)
+        embed.set_footer(
+            text=f'作成: {guild.created_at.strftime("%Y/%m/%d %H:%M:%S")}')
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -124,10 +172,9 @@ class Utils(commands.Cog):
     async def user(self, ctx: commands.Context, user=None):
         '''
         ユーザーに関する情報を表示
+
         引数を指定しない場合は送信者の情報が表示されます
         '''
-        logger.info("'User' コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         def mention_to_id(mention):
             if members := re.findall(r'<@[\!&]?([0-9]+)?>', mention):
                 return [int(member) for member in members]
@@ -141,27 +188,29 @@ class Utils(commands.Cog):
         embed.set_thumbnail(url=str(member.avatar_url))
         embed.add_field(name='a.k.a.', value=f'{member.display_name}')
         embed.add_field(name='ID', value=f'{member.id}')
-        embed.add_field(name='参加日時', value=f'{member.joined_at.strftime("%y/%m/%d %H:%M:%S")}')
+        embed.add_field(
+            name='参加日時', value=f'{member.joined_at.strftime("%y/%m/%d %H:%M:%S")}')
         embed.add_field(name='状態', value=f'{member.status}')
         if member.activity:
             embed.add_field(name='アクティビティ', value=f'{member.activity.name}')
-        embed.add_field(name='Bot/非Bot', value=f'{"非" if not member.bot else ""}Bot')
-        embed.add_field(name='役職', value=f'{", ".join([role.name for role in member.roles])}')
-        embed.set_footer(text=f'ユーザー作成日時: {member.created_at.strftime("%y/%m/%d %H:%M:%S")}')
+        embed.add_field(name='Bot/非Bot',
+                        value=f'{"非" if not member.bot else ""}Bot')
+        embed.add_field(
+            name='役職', value=f'{", ".join([role.name for role in member.roles])}')
+        embed.set_footer(
+            text=f'ユーザー作成日時: {member.created_at.strftime("%y/%m/%d %H:%M:%S")}')
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.guild_only()
     async def about(self, ctx: commands.Context):
         '''
         当Botに関する情報を表示します
         '''
-        logger.info("'About' コマンドが実行されました")
-        logger.debug(f"\t{ctx.guild.name}({ctx.guild.id})")
         bot = self.bot
         appinfo: discord.AppInfo = await bot.application_info()
         shard = f'{bot.shard_id}/{bot.shard_count}' if bot.shard_id else None
-        embed = discord.Embed(title=f'{appinfo.name}', colour=config.theme_color)
+        embed = discord.Embed(
+            title=f'{appinfo.name}', colour=config.theme_color)
         embed.set_thumbnail(url=str(appinfo.icon_url))
         embed.add_field(name='Version', value=f'**{konoha.__version__}**')
         embed.add_field(name='開発者', value=f'{appinfo.owner.mention}')
@@ -169,9 +218,11 @@ class Utils(commands.Cog):
         embed.add_field(name='総ユーザー数', value=f'{len(bot.users)}')
         if shard is not None:
             embed.add_field(name='シャード No.', value=shard)
-        embed.add_field(name='公開状態', value=f'{"Public" if appinfo.bot_public else "Private" }')
+        embed.add_field(
+            name='公開状態', value=f'{"Public" if appinfo.bot_public else "Private" }')
         embed.add_field(name='ID', value=f'{appinfo.id}')
         await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Utils(bot))

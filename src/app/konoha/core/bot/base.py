@@ -15,12 +15,14 @@ from konoha.core.log.logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
+
 class BotBase(commands.Bot):
     def __init__(self, *args, **kwargs):
-        super(BotBase, self).__init__(help_command=CustomHelpCommand() ,*args, **kwargs)
+        super(BotBase, self).__init__(
+            help_command=CustomHelpCommand(), *args, **kwargs)
         self.get_all_cogs()
 
-    @property 
+    @property
     def session(self) -> ClientSession:
         if not hasattr(self, '_sess'):
             self._sess = ClientSession(loop=self.loop)
@@ -32,15 +34,18 @@ class BotBase(commands.Bot):
         logger.info("Bot  ID  : %s", self.user.id)
         logger.info("Version  : %s", konoha.__version__)
         await self.change_presence(status=discord.Status.online)
-        
+
     async def get_prefix(self, message: discord.Message):
-        guild = await q.Guild(guild_id=message.guild.id).get(verbose=0)
-        return guild.prefix
+        if message.guild:
+            guild = await q.Guild(guild_id=message.guild.id).get(verbose=0)
+            return commands.when_mentioned_or(guild.prefix)(self, message)
+        else:
+            return ['']
 
     async def set_prefix(self, message: discord.Message, prefix: str):
         await q.Guild(guild_id=message.guild.id).set(prefix=prefix)
 
-    async def on_guild_join(self, guild: discord.Guild): 
+    async def on_guild_join(self, guild: discord.Guild):
         logger.info(f"ギルド加入: {guild.name}({guild.id})")
         await q.Guild.create(guild.id)
 
@@ -82,7 +87,8 @@ class BotBase(commands.Bot):
                 task.cancel()
                 logger.debug(f"\tTask: {task.get_name()}をキャンセルしました")
             try:
-                self.loop.run_until_complete(asyncio.gather(*asyncio.all_tasks(self.loop)))
+                self.loop.run_until_complete(
+                    asyncio.gather(*asyncio.all_tasks(self.loop)))
             except asyncio.CancelledError:
                 logger.debug("すべてのタスクをキャンセルしました")
             finally:
