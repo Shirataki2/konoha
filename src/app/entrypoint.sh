@@ -9,7 +9,7 @@ function run() {
 
 echo '[*] Database Migration'
 run 'cd ./konoha/models'
-# run 'PYTHONPATH="." alembic upgrade head'
+run 'PYTHONPATH="." alembic upgrade head'
 run 'PYTHONPATH="." alembic revision --autogenerate -m \"$(date +%Y_%m_%d_%H_%M_%S)\"'
 run 'PYTHONPATH="." alembic upgrade head'
 run 'cd ../..'
