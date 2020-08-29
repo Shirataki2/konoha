@@ -84,7 +84,7 @@ def user(column):
             return False
         loop = asyncio.get_event_loop()
         try:
-            perm = await q.User(ctx.author.id).get(verbose=0)
+            perm = await q.User(ctx.author.id).get(verbose=2)
         except:
             return False
         return getattr(perm, column, False)

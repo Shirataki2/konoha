@@ -21,6 +21,7 @@
       <v-chip
         v-for="role in userrole"
         :key="role.id"
+        dark
         draggable
         :color="getColor(role.color)"
       >
@@ -40,6 +41,7 @@
       <v-chip
         v-for="role in unselectRoles"
         :key="role.id"
+        dark
         draggable
         :color="getColor(role.color)"
       >

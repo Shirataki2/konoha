@@ -236,10 +236,10 @@ Component.registerHooks(['beforeRouteLeave'])
         store.dispatch('auth/setUser', data)
         return { userdata: data }
       } catch {
-        redirect(301, '/')
+        redirect(301, '/logout')
       }
     } else {
-      redirect(301, '/')
+      redirect(301, '/logout')
     }
   },
 })

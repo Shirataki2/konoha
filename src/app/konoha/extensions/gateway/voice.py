@@ -74,7 +74,6 @@ class ExtendedDiscordVoiceWabSocket:
                 pkt = Packet.from_data(recv)
                 header, data = decrypt_fn(recv)
                 pkt.decrypted = data
-                print(pkt)
                 if isinstance(pkt, RTPPacket):
                     pkt.calc_extention_header_length(data)
                     await self.decoder.push(pkt)

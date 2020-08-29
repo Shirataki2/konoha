@@ -56,10 +56,10 @@ class Images(commands.Cog):
             else:
                 await ctx.send(f"まだWebHookを利用していません")
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=300)
     async def postloop(self):
         try:
-            for hook in await q.Hook.get_all(verbose=0):
+            for hook in await q.Hook.get_all(verbose=2):
                 async with aiohttp.ClientSession() as session:
                     webhook = discord.Webhook.from_url(
                         hook.hookurl,

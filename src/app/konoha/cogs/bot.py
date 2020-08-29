@@ -26,9 +26,9 @@ async def get_duration(coro, *args, **kwargs):
     return (end - start) * 1000, ret
 
 
-class Utils(commands.Cog):
+class Bot(commands.Cog):
     '''
-    ほかのカテゴリには属さないような便利機能です
+    Botに関する基本的な設定や機能
     '''
 
     def __init__(self, bot: Konoha):
@@ -64,23 +64,26 @@ class Utils(commands.Cog):
         embed.add_field(name="メッセージ送信遅延", value=f"{message_dur:.2f} ms")
         await message.edit(embed=embed)
 
-    @commands.command()
+    @commands.command(name="?")
+    @commands.guild_only()
+    async def get_prefix(self, ctx: commands.Context):
+        '''
+        Botの現在のPrefixを返します
+        '''
+        guild = await q.Guild(ctx.guild.id).get(verbose=2)
+        return await ctx.send(f"このサーバーのPrefixは`{guild.prefix}`です！")
+
+    @commands.command(name="prefix")
     @commands.guild_only()
     @checks.can_manage_guild()
-    @checks.user("moderator")
-    async def prefix(self, ctx: commands.Context, prefix: str = None):
+    async def prefix(self, ctx: commands.Context, prefix: str):
         '''
         Botを呼び出すための接頭文字(Prefix)を変更します
 
         引数`prefix`は8文字以下で設定してください
 
-        prefixに何も指定しない場合は現在のPrefixを返します
-
         例えば prefix が `$`であればコマンドは`$ping`のようにして呼び出すことができます．
         '''
-        if prefix is None:
-            guild = await q.Guild(ctx.guild.id).get(verbose=0)
-            return await ctx.send(f"このサーバーのPrefixは`{guild.prefix}`です！")
         if len(prefix) > 8:
             return await self.bot.send_error(
                 ctx,
@@ -134,7 +137,7 @@ class Utils(commands.Cog):
         await asyncio.sleep(seconds)
         await ctx.send(f"{ctx.author.mention} {seconds:.1f}秒間経過しました!")
 
-    @commands.command()
+    @commands.command(aliases=["server"])
     @commands.guild_only()
     async def guild(self, ctx: commands.Context):
         '''
@@ -168,7 +171,6 @@ class Utils(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.guild_only()
     async def user(self, ctx: commands.Context, user=None):
         '''
         ユーザーに関する情報を表示
@@ -225,4 +227,4 @@ class Utils(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Utils(bot))
+    bot.add_cog(Bot(bot))

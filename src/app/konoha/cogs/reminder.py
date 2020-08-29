@@ -19,6 +19,7 @@ class Reminder(commands.Cog):
     '''
     指定時間にイベントを通知する機能です
     '''
+
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
         self.notifications = [
@@ -227,7 +228,7 @@ class Reminder(commands.Cog):
         for notification in self.notifications:
             reminders = await q.Reminder.search_between_minutes(notification["before"], verbose=0)
             for reminder in reminders:
-                c = await q.Reminder.get_config_from_id(reminder.config, verbose=0)
+                c = await q.Reminder.get_config_from_id(reminder.config, verbose=2)
                 guild: discord.Guild = await self.bot.fetch_guild(c.guild)
                 channel: discord.TextChannel = await self.bot.fetch_channel(c.channel)
                 embed = discord.Embed(

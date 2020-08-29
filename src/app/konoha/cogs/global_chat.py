@@ -54,7 +54,7 @@ class GlobalChat(commands.Cog):
             hook = await channel.create_webhook(
                 name="Global Chat"
             )
-            await q.Guild(ctx.guild.id).set(gc_channel=hook.url)
+            await q.Guild(ctx.guild.id).set(gc_url=hook.url, gc_channel=channel.id)
             await ctx.send(f"グローバルチャットの投稿先を{channel.mention}に設定しました")
         else:
             async with aiohttp.ClientSession() as session:
@@ -63,7 +63,7 @@ class GlobalChat(commands.Cog):
                 newhook = await channel.create_webhook(
                     name="Global Chat"
                 )
-                await q.Guild(ctx.guild.id).set(gc_channel=newhook.url)
+                await q.Guild(ctx.guild.id).set(gc_channel=channel.id, gc_url=newhook.url)
                 await ctx.send(f"グローバルチャットの投稿先{channel.mention}に変更しました")
                 await hook.delete()
 
@@ -80,8 +80,8 @@ class GlobalChat(commands.Cog):
         else:
             async with aiohttp.ClientSession() as session:
                 hook = discord.Webhook.from_url(
-                    guild.gc_channel, adapter=discord.AsyncWebhookAdapter(session))
-                await q.Guild(ctx.guild.id).set(gc_channel=None)
+                    guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
+                await q.Guild(ctx.guild.id).set(gc_channel=None, gc_url=None)
                 await ctx.send(f"グローバルチャットサービスの利用を終了しました")
                 await hook.delete()
 
@@ -166,24 +166,19 @@ class GlobalChat(commands.Cog):
     async def on_message(self, message: discord.Message):
         if message.author.bot or message.guild is None:
             return
-        guild = await q.Guild(message.guild.id).get(verbose=0)
-        if guild.gc_channel is None:
+        guild = await q.Guild(message.guild.id).get(verbose=2)
+        if int(guild.gc_channel) != message.channel.id:
             return
-        async with aiohttp.ClientSession() as session:
-            hook = discord.Webhook.from_url(
-                guild.gc_channel, adapter=discord.AsyncWebhookAdapter(session))
-        if hook.id in [_hook.id for _hook in await message.channel.webhooks()]:
-            guilds = [
-                g
-                for g in await q.Guild.get_all(verbose=0)
-                if (int(g.id) != message.guild.id) and (g.gc_channel is not None)
-            ]
-            print(guilds, message.guild.id)
-            await asyncio.gather(*[
-                send_global_message(g, message)
-                for g in guilds
-            ])
-            await message.add_reaction("✅")
+        guilds = [
+            g
+            for g in await q.Guild.get_all(verbose=2)
+            if (int(g.id) != message.guild.id) and (g.gc_channel is not None)
+        ]
+        await asyncio.gather(*[
+            send_global_message(g, message)
+            for g in guilds
+        ])
+        await message.add_reaction("✅")
 
     @report.error
     async def on_report_error(self, ctx: commands.Context, error: Exception):
@@ -198,7 +193,7 @@ class GlobalChat(commands.Cog):
 async def send_global_message(guild, message):
     async with aiohttp.ClientSession() as session:
         hook = discord.Webhook.from_url(
-            guild.gc_channel, adapter=discord.AsyncWebhookAdapter(session))
+            guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
         await hook.send(
             message.content,
             username=message.author.name,

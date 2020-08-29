@@ -114,9 +114,15 @@ class Administrator(commands.Cog):
             embed.set_author(
                 name=f"Error: {error.id}", icon_url=self.bot.user.avatar_url)
             embed.description = f"**Traceback**\n```python\n{error.traceback}\n```"
-            embed.add_field(name="サーバー", value=f"{error.guild}")
-            embed.add_field(name="チャンネル", value=f"{error.channel}")
-            embed.add_field(name="投稿者", value=f"{error.user}")
+            g = await ctx.bot.fetch_guild(error.guild)
+            c = await ctx.bot.fetch_channel(error.channel)
+            embed.add_field(name="サーバー", value=f"{g.name} ({error.guild})")
+            embed.add_field(
+                name="チャンネル", value=f"{c.mention} ({error.channel})")
+            if error.guild:
+                embed.add_field(
+                    name="メッセージ", value=f"[{error.message}](https://discord.com/channels/{error.guild}/{error.channel}/{error.message})")
+            embed.add_field(name="投稿者", value=f"<@{error.user}>")
             embed.add_field(
                 name="詳細", value=f"```\n{error.detail}\n```", inline=False)
             await ctx.send(embed=embed)

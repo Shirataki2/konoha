@@ -9,7 +9,7 @@ guild = Table(
     Column("id", String(64), nullable=False, primary_key=True),
     Column("prefix", String(255), server_default=">", nullable=False),
     Column("gc_channel", String(255), nullable=True),
-    Column("comment", String(255), nullable=True),
+    Column("gc_url", String(255), nullable=True),
 )
 
 hook = Table(
@@ -49,6 +49,7 @@ error_log = Table(
     Column("id", String(24), nullable=False),
     Column("guild", String(24)),
     Column("channel", String(24)),
+    Column("message", String(24)),
     Column("user", String(24), nullable=False),
     Column("command", String(256), nullable=False),
     Column("name", String(24), nullable=False),
@@ -61,4 +62,15 @@ user_status = Table(
     meta,
     Column("id", String(24), primary_key=True, nullable=False),
     Column("moderator", Boolean(), nullable=True),
+)
+
+vote = Table(
+    "vote",
+    meta,
+    Column("id", String(24), primary_key=True, nullable=False),
+    Column("guild", String(24), nullable=False),
+    Column("channel", String(24), nullable=False),
+    Column("message", String(24), nullable=False),
+    Column("user", String(24), nullable=False),
+    Column("description", String(3000), nullable=False),
 )

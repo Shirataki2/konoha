@@ -166,7 +166,7 @@ async def guilds(token: str = Query(...)):
             guilds = list(filter(lambda g: g["permissions"] & 32, await resp.json(encoding="utf-8")))
             guilds2 = list(filter(lambda g: not (g["permissions"] & 32), await resp.json(encoding="utf-8")))
     for guild in guilds:
-        if await q.Guild(guild["id"]).get(verbose=0):
+        if await q.Guild(guild["id"]).get(verbose=2):
             guild["joined"] = 1
         else:
             guild["joined"] = 0
@@ -174,7 +174,7 @@ async def guilds(token: str = Query(...)):
             guild["icon_url"] = cdn_base + \
                 f"/icons/{guild['id']}/{guild['icon']}"
     for guild in guilds2:
-        if await q.Guild(guild["id"]).get(verbose=0):
+        if await q.Guild(guild["id"]).get(verbose=2):
             guild["joined"] = 1
         else:
             guild["joined"] = 0

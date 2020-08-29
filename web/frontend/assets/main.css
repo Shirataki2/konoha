@@ -1,7 +1,7 @@
-.theme--dark.v-btn--active.no-active::before {
+.no-active::before {
   opacity: 0 !important;
 }
-.theme--dark.v-btn--active.no-active:hover::before {
+.no-active:hover::before {
   opacity: 0.08 !important;
 }
 
@@ -10,14 +10,20 @@ html {
 }
 
 html::-webkit-scrollbar{
-  width: 16px;
-}
-
-html::-webkit-scrollbar-track:hover{
-  background: #eee;
+  width: 12px;
+  background: #555;
 }
 
 html::-webkit-scrollbar-thumb{
-  background: #bbb;
-  border-radius: 8px;
+  background: #ddd;
+  border-radius: 6px;
+}
+
+.v-card__text {
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+}
+
+li {
+  line-height: 1.6rem !important;
 }

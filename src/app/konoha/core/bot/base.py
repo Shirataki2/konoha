@@ -34,10 +34,11 @@ class BotBase(commands.Bot):
         logger.info("Bot  ID  : %s", self.user.id)
         logger.info("Version  : %s", konoha.__version__)
         await self.change_presence(status=discord.Status.online)
+        await self.change_presence(activity=discord.Game(name="@KonohaDev ? でPrefixを確認"))
 
     async def get_prefix(self, message: discord.Message):
         if message.guild:
-            guild = await q.Guild(guild_id=message.guild.id).get(verbose=0)
+            guild = await q.Guild(guild_id=message.guild.id).get(verbose=2)
             return commands.when_mentioned_or(guild.prefix)(self, message)
         else:
             return ['']

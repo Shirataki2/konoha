@@ -22,6 +22,8 @@ fastapi = {extras = ["all"], version = "*"}
 pynacl = "*"
 youtube-dl = "*"
 pydub = "*"
+matplotlib = "*"
+opencv-python = "*"
 
 [requires]
 python_version = "3.8"

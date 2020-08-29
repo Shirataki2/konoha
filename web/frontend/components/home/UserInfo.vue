@@ -29,6 +29,7 @@
                 <div v-for="badge in badges" :key="badge.name">
                   <v-chip
                     v-if="badge.value()"
+                    dark
                     disabled
                     style="opacity: 1;"
                     :color="badge.color"

@@ -6,7 +6,7 @@
         前月
       </v-btn>
       <v-spacer />
-      <v-btn text class="align-end" color="white" x-large @click="setToday">
+      <v-btn text class="align-end" x-large @click="setToday">
         <span class="text-h3" v-text="year" />
         <span class="text-h3" v-text="month" />
       </v-btn>

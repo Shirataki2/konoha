@@ -23,3 +23,8 @@ COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python
 COPY . /workspace/konoha
 RUN pip uninstall -y uvicorn
 RUN pip install uvicorn
+
+COPY ipaexg.ttf /usr/share/fonts/truetype
+RUN echo 'font.family : IPAexGothic' >> /usr/local/lib/python3.8/site-packages/matplotlib/mpl-data/matplotlibrc && \
+    rm -rf /root/.config/matplotlib
+

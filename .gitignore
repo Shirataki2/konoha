@@ -6,3 +6,4 @@ config.ini
 alembic.ini
 *.mp3
 *.wav
+*.ttf

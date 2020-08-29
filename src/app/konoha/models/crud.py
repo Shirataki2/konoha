@@ -296,9 +296,9 @@ class Error(CRUDBase):
         return await result.fetchone()
 
     @classmethod
-    async def create(cls, id, guild_id, channel_id, user_id, command, name, detail, traceback, verbose=1):
+    async def create(cls, id, guild_id, channel_id, user_id, message_id, command, name, detail, traceback, verbose=1):
         q = models.error_log.insert(None).values(
-            id=id, guild=guild_id, channel=channel_id, user=user_id, command=command,
+            id=id, guild=guild_id, channel=channel_id, user=user_id, message=message_id, command=command,
             name=name, detail=detail, traceback=traceback
         )
         guild = cls(id)
@@ -330,7 +330,7 @@ class User(CRUDBase):
         return guild
 
     async def set(self, verbose=1, **kwargs):
-        q = models.reminder.update(None).where(
+        q = models.user_status.update(None).where(
             models.user_status.c.id == self.id
         ).values(**kwargs)
         await Reminder.execute(q, verbose)
@@ -340,5 +340,36 @@ class User(CRUDBase):
     async def search(verbose=1, **kwargs):
         q = models.user_status.select().where(
             and_(*[v == getattr(models.user_status.c, k) for k, v in kwargs.items()]))
+        result = await CRUDBase.execute(q, verbose)
+        return await result.fetchall()
+
+
+class Vote(CRUDBase):
+    def __init__(self, id):
+        self.id = id
+
+    async def get(self, verbose=1):
+        q = models.vote.select().where(self.id == models.vote.c.id)
+        result = await self.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def create(cls, id, verbose=1, **kwargs):
+        q = models.vote.insert(None).values(id=id, **kwargs)
+        guild = cls(id)
+        await cls.execute(q, verbose)
+        return guild
+
+    async def set(self, verbose=1, **kwargs):
+        q = models.vote.update(None).where(
+            models.vote.c.id == self.id
+        ).values(**kwargs)
+        await Reminder.execute(q, verbose)
+        return self
+
+    @staticmethod
+    async def search(verbose=1, **kwargs):
+        q = models.vote.select().where(
+            and_(*[v == getattr(models.vote.c, k) for k, v in kwargs.items()]))
         result = await CRUDBase.execute(q, verbose)
         return await result.fetchall()

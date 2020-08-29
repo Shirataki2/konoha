@@ -41,9 +41,9 @@ class CustomHelpCommand(commands.HelpCommand):
 
     def get_command_description(self, command: commands.Command):
         if not command.short_doc:
-            return "このコマンドの説明はありません"
+            return "このコマンドの説明はありません\n\n"
         else:
-            return command.short_doc.format(prefix=self.clean_prefix)
+            return command.short_doc.format(prefix=self.clean_prefix) + "\n\n"
 
     def get_command_help(self, command: commands.Command):
         if not command.help:
@@ -75,16 +75,20 @@ class CustomHelpCommand(commands.HelpCommand):
                     continue
             if len(runnables) == 0:
                 continue
+            j = 0
             i += 1
             prev = None
-            paginator.new_page()
-            paginator.content[i]["title"] = f"Category: {cog.qualified_name}"
-            if cog.description:
-                paginator.content[i]["description"] = cog.description \
-                                                         .split('\n')[0] \
-                                                         .format(prefix=self.clean_prefix)
-            else:
-                paginator.content[i]["description"] = None
+
+            def new_page():
+                paginator.new_page()
+                paginator.content[i]["title"] = f"Category: {cog.qualified_name}"
+                if cog.description:
+                    paginator.content[i]["description"] = cog.description \
+                        .split('\n')[0] \
+                        .format(prefix=self.clean_prefix)
+                else:
+                    paginator.content[i]["description"] = None
+            new_page()
             cog: commands.Cog
             for c in runnables:
                 if c.name == prev:
@@ -93,6 +97,10 @@ class CustomHelpCommand(commands.HelpCommand):
                     s = self.get_command_signature(c)
                     d = self.get_command_description(c)
                     a = self.get_command_aliases(c)
+                    j += 1
+                    if j > 0 and j % 10 == 0:
+                        i += 1
+                        new_page()
                     if c.aliases:
                         paginator.add_row_manually(
                             f"{s}    `({a})`", d, page=i)

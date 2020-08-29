@@ -93,6 +93,7 @@ export default {
   content: {},
   env: {
     oauth2_url: process.env.OAUTH2_URL || '',
+    login_url: process.env.LOGIN_URL || '',
     bot_url: process.env.BOT_URL || '',
     bot_id: process.env.BOT_ID || '',
     bot_secret: process.env.BOT_SECRET || '',
@@ -132,6 +133,7 @@ export default {
       config.node = {
         fs: 'empty',
         net: 'empty',
+        readline: 'empty',
       }
     },
   },
