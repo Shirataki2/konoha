@@ -10,7 +10,7 @@
       <v-row>
         <v-col class="hidden-xs-only" sm="3" md="3" lg="3" offset-lg="1">
           <div style="position: sticky; top: 0;">
-            <v-list>
+            <v-list  v-if="pages.length">
               <v-list-item-group v-model="currentPage" color="blue" mandatory>
                 <v-list-item v-for="page in pages" :key="page.slug">
                   <v-list-item-title v-text="page.title" />
@@ -30,7 +30,7 @@
           </div>
         </v-col>
         <v-col cols="12" sm="9" md="9" lg="7">
-          <div v-if="pages">
+          <div v-if="pages.length">
             <nuxt-content :document="currentDocument" />
           </div>
         </v-col>
@@ -59,7 +59,7 @@ interface Page {
   asyncData: async ({ $content, store, app, $axios }) => {
     const pages = await $content('commands').sortBy('description').fetch()
     if (store.getters['auth/accessToken'] && store.getters['auth/user']) {
-      return { userdata: store.getters['auth/user'] }
+      return { pages, userdata: store.getters['auth/user'] }
     } else if (app.$cookies.get('access_token')) {
       store.dispatch('auth/setAccessToken', app.$cookies.get('access_token'))
       store.dispatch('auth/setRefreshToken', app.$cookies.get('refresh_token'))
