@@ -7,3 +7,4 @@ alembic.ini
 *.mp3
 *.wav
 *.ttf
+src/app/konoha/api/main_.py

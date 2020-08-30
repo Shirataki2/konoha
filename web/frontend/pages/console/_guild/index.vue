@@ -26,14 +26,10 @@
                   <v-icon>mdi-robot</v-icon>
                 </v-tab>
                 <v-tab href="#tab-2">
-                  ユーザー
-                  <v-icon>mdi-account</v-icon>
-                </v-tab>
-                <v-tab href="#tab-3">
                   設定
                   <v-icon>mdi-cog</v-icon>
                 </v-tab>
-                <v-tab href="#tab-4">
+                <v-tab href="#tab-3">
                   支援
                   <v-icon>mdi-gift-outline</v-icon>
                 </v-tab>
@@ -71,7 +67,7 @@
                     </v-container>
                   </v-card>
                 </v-tab-item>
-                <v-tab-item value="tab-2">
+                <!-- <v-tab-item value="tab-2">
                   <v-card flat>
                     <v-card-title class="justify-center mb-n10 mt-3 text-h5">
                       自分の情報
@@ -165,8 +161,8 @@
                       </v-dialog>
                     </v-card-text>
                   </v-card>
-                </v-tab-item>
-                <v-tab-item value="tab-3">
+                </v-tab-item> -->
+                <v-tab-item value="tab-2">
                   <Settings
                     ref="form"
                     :user="guild.user"
@@ -174,7 +170,7 @@
                     @dirty="dirty"
                   />
                 </v-tab-item>
-                <v-tab-item value="tab-4">
+                <v-tab-item value="tab-3">
                   <v-card flat>
                     <v-card-text>
                       Lorem ipsum dolor sit amet consectetur adipisicing elit.
@@ -260,36 +256,36 @@ class Index extends Vue {
   currId = ''
 
   @Watch('options', { deep: true })
-  async onOptionChanged() {
-    if (this.options.page > this.prevPage) {
-      this.currId =
-        this.members.length > 0
-          ? this.members[this.members.length - 1].user.id
-          : '0'
-      this.prevMembers[this.prevPage.toString()] = JSON.parse(
-        JSON.stringify(this.members)
-      )
-      this.prevPage = this.options.page
-    } else {
-      if (this.options.page < 2) {
-        this.currId = '0'
-      } else {
-        this.currId = this.prevMembers[this.options.page - 1][
-          this.prevMembers[this.options.page - 1].length - 1
-        ].user.id
-      }
-      this.prevPage = this.options.page
-    }
-    this.loading = true
-    const { data } = await this.$axios.get('/local_api/members', {
-      params: {
-        guild_id: this.$route.params.guild,
-        offset: this.currId,
-        limit: this.options.itemsPerPage,
-      },
-    })
-    this.members = data.map((member: Member) => ({ ...member, dialog: false }))
-    this.loading = false
+  onOptionChanged() {
+    // if (this.options.page > this.prevPage) {
+    //   this.currId =
+    //     this.members.length > 0
+    //       ? this.members[this.members.length - 1].user.id
+    //       : '0'
+    //   this.prevMembers[this.prevPage.toString()] = JSON.parse(
+    //     JSON.stringify(this.members)
+    //   )
+    //   this.prevPage = this.options.page
+    // } else {
+    //   if (this.options.page < 2) {
+    //     this.currId = '0'
+    //   } else {
+    //     this.currId = this.prevMembers[this.options.page - 1][
+    //       this.prevMembers[this.options.page - 1].length - 1
+    //     ].user.id
+    //   }
+    //   this.prevPage = this.options.page
+    // }
+    // this.loading = true
+    // const { data } = await this.$axios.get('/local_api/members', {
+    //   params: {
+    //     guild_id: this.$route.params.guild,
+    //     offset: this.currId,
+    //     limit: this.options.itemsPerPage,
+    //   },
+    // })
+    // this.members = data.map((member: Member) => ({ ...member, dialog: false }))
+    // this.loading = false
   }
 
   isDirty = false
@@ -379,12 +375,9 @@ class Index extends Vue {
   ]
 
   async mounted() {
-    if (this.$route.params.guild) {
-      const { data } = await this.$axios.get('/local_api/guild', {
-        params: {
-          guild_id: this.$route.params.guild,
-        },
-      })
+    const guild = this.$route.params.guild
+    if (guild) {
+      const { data } = await this.$axios.get(`/local_api/guilds/${guild}`)
       if (data.status_code === 404) {
         this.is404 = true
         return

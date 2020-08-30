@@ -16,6 +16,8 @@ import '@nuxtjs/axios'
 @Component({
   name: 'Home',
   asyncData: async ({ redirect, store, app, $axios }) => {
+    if (app.$cookies.get('access_token')) {
+    }
     if (store.getters['auth/accessToken'] && store.getters['auth/user']) {
       return { userdata: store.getters['auth/user'] }
     } else if (app.$cookies.get('access_token')) {

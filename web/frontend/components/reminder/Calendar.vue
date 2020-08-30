@@ -67,7 +67,7 @@ class Calendar extends Vue {
     const [year, month, day] = this.date.split('-')
     try {
       const { data } = await this.$axios.get<Array<Reminder>>(
-        '/local_api/month_reminders',
+        '/local_api/reminders/monthly',
         {
           params: {
             guild_id: this.$route.params.guild,
@@ -101,7 +101,7 @@ class Calendar extends Vue {
     this.reminders = []
     try {
       const { data } = await this.$axios.get<Array<Reminder>>(
-        '/local_api/month_reminders',
+        '/local_api/reminders/monthly',
         {
           params: {
             guild_id: this.$route.params.guild,

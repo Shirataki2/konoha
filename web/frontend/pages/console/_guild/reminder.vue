@@ -205,12 +205,9 @@ class Index extends Vue {
   }
 
   async mounted() {
-    if (this.$route.params.guild) {
-      const { data } = await this.$axios.get('/local_api/guild', {
-        params: {
-          guild_id: this.$route.params.guild,
-        },
-      })
+    const guild = this.$route.params.guild
+    if (guild) {
+      const { data } = await this.$axios.get(`/local_api/guilds/${guild}`)
       this.guild = data
     }
   }
@@ -237,7 +234,7 @@ class Index extends Vue {
     const module = getModule(NotificationModule, this.$store)
     if (confirm('このリマインダーを削除しますか？')) {
       try {
-        await this.$axios.delete('/local_api/reminder', {
+        await this.$axios.delete('/local_api/reminders', {
           params: {
             guild_id: this.guild?.id,
             reminder_id: reminder.id,

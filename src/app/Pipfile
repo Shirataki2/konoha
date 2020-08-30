@@ -24,6 +24,7 @@ youtube-dl = "*"
 pydub = "*"
 matplotlib = "*"
 opencv-python = "*"
+pyjwt = "*"
 
 [requires]
 python_version = "3.8"

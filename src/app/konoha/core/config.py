@@ -17,6 +17,7 @@ class Config:
     theme_color: int = 0xff0000
     log_channel: str = ""
     deepl_apikey: str = ""
+    session_key: str = ""
 
     def __init__(self, ini_file_path: str) -> None:
         parser = ConfigParser()

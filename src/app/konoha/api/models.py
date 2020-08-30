@@ -72,3 +72,27 @@ class Permission:
 
     def to_json(self):
         return {flag: getattr(self, flag) for flag in self.flags}
+
+    @classmethod
+    def from_json(cls, payload):
+        obj = cls(0)
+        for attr, flag in payload.items():
+            if hasattr(obj, attr):
+                setattr(obj, attr, flag)
+        return obj
+
+    @property
+    def is_admin(self):
+        return self.owner or self.administrator
+
+    @property
+    def can_manage_guild(self):
+        return self.is_admin() or self.manage_guild
+
+    @property
+    def can_manage_roles(self):
+        return self.is_admin() or self.manage_roles
+
+    @property
+    def can_manage_messages(self):
+        return self.is_admin() or self.manage_messages

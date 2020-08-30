@@ -8,7 +8,7 @@
       </v-row>
       <v-divider />
       <v-row>
-        <v-col cols="12" sm="3" md="3" lg="3" offset-lg="1">
+        <v-col class="hidden-xs-only" sm="3" md="3" lg="3" offset-lg="1">
           <div style="position: sticky; top: 0;">
             <v-list>
               <v-list-item-group v-model="currentPage" color="blue" mandatory>
@@ -17,6 +17,16 @@
                 </v-list-item>
               </v-list-item-group>
             </v-list>
+          </div>
+        </v-col>
+        <v-col class="hidden-sm-and-up" cols="12">
+          <div>
+            <v-select
+              :items="pages"
+              item-text="title"
+              item-value="title"
+              @change="onCogSelected(selected)"
+            />
           </div>
         </v-col>
         <v-col cols="12" sm="9" md="9" lg="7">
@@ -71,6 +81,10 @@ class Commands extends Vue {
 
   get currentDocument() {
     return this.pages[this.currentPage]
+  }
+
+  onCogSelected(selected) {
+    console.log(selected)
   }
 }
 export default Commands

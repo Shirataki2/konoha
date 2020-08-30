@@ -17,6 +17,7 @@ class Logout extends Vue {
     const sleep = (msec) => new Promise((resolve) => setTimeout(resolve, msec))
     this.$cookies.remove('access_token')
     this.$cookies.remove('refresh_token')
+    this.$cookies.remove('session')
     this.$store.dispatch('auth/setAccessToken', '')
     this.$store.dispatch('auth/setRefreshToken', '')
     this.$store.dispatch('auth/setUser', null)

@@ -188,7 +188,7 @@ class Dialog extends Vue {
     try {
       if (this.index < 0) {
         await this.$axios.post(
-          '/local_api/reminder',
+          '/local_api/reminders',
           {
             content: this.name,
             start_at: `${this.startDate} ${this.startTime}`,
@@ -204,7 +204,7 @@ class Dialog extends Vue {
           ? this.reminder.id
           : this.reminders[this.index].id
         await this.$axios.patch(
-          '/local_api/reminder',
+          '/local_api/reminders',
           {
             content: this.name,
             start_at: `${this.startDate} ${this.startTime}`,
@@ -244,7 +244,7 @@ class Dialog extends Vue {
     this.deleteLoading = true
     if (confirm('このリマインダーを削除しますか？')) {
       try {
-        await this.$axios.delete('/local_api/reminder', {
+        await this.$axios.delete('/local_api/reminders', {
           params: {
             guild_id: this.guild?.id,
             reminder_id: id,

@@ -122,7 +122,7 @@ class Index extends Vue {
 
   async mounted() {
     try {
-      const { data } = await this.$axios.get('/local_api/guilds', {
+      const { data } = await this.$axios.get('/local_api/guilds/me', {
         params: {
           token: this.$store.getters['auth/accessToken'],
         },
