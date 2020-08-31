@@ -1,7 +1,10 @@
 <template>
   <div>
-    <h1 class="text-center text-h4 mt-10 mb-6">
-      Konoha Bot 管理コンソール
+    <h1 class="text-center text-h4 mt-5 mb-3">
+      Konoha Bot
+    </h1>
+    <h1 class="text-center text-h4 mt-1 mb-6">
+      管理コンソール
     </h1>
     <v-container>
       <v-row>

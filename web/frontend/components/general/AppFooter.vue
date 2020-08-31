@@ -1,8 +1,8 @@
 <template>
-  <v-footer fixed>
+  <v-footer app color="black">
     <v-col
       class="text-center ma-n2"
-      style="font-size: 0.8em;"
+      style="font-size: 0.8em; color: #fff;"
       padless
       cols="12"
     >

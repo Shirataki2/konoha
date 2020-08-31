@@ -1,19 +1,28 @@
 <template>
   <div>
-    <v-app-bar color="grey darken-4" dark>
-      <v-app-bar-nav-icon
-        class="hidden-sm-and-up mr-n3"
-        @click.stop="drawer = !drawer"
-      ></v-app-bar-nav-icon>
+    <v-app-bar color="grey darken-4" dark app flat clipped-left>
+      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
       <v-toolbar-title style="cursor: pointer;" @click="$router.push('/')">
         <strong>Konoha Bot</strong>
       </v-toolbar-title>
       <v-spacer />
-      <v-btn to="/commands" text nuxt active-class="no-active">
+      <v-btn
+        to="/commands"
+        text
+        nuxt
+        active-class="no-active"
+        class="hidden-xs-only"
+      >
         Commands
       </v-btn>
       <div v-if="isLogin">
-        <v-btn to="/console" text nuxt active-class="no-active">
+        <v-btn
+          to="/console"
+          text
+          nuxt
+          active-class="no-active"
+          class="hidden-xs-only"
+        >
           <v-icon>mdi-console-line</v-icon>
           Console
         </v-btn>
@@ -29,6 +38,20 @@
             </v-btn>
           </template>
           <v-list>
+            <v-list-item
+              to="/console"
+              class="hidden-sm-and-up"
+              text
+              nuxt
+              active-class="no-active"
+            >
+              <v-list-item-icon>
+                <v-icon>mdi-console-line</v-icon>
+              </v-list-item-icon>
+              <v-list-item-title>
+                Console
+              </v-list-item-title>
+            </v-list-item>
             <v-list-item to="/logout" text nuxt active-class="no-active">
               <v-list-item-icon>
                 <v-icon>mdi-logout</v-icon>
@@ -58,13 +81,19 @@
         </v-btn>
       </div>
     </v-app-bar>
+    <AppNavBar v-model="drawer" :is-login="isLogin" />
   </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
+import AppNavBar from '@/components/general/NavBar.vue'
 
-@Component({})
+@Component({
+  components: {
+    AppNavBar,
+  },
+})
 class AppHeader extends Vue {
   drawer = false
   show = false
@@ -90,6 +119,7 @@ class AppHeader extends Vue {
 
   themeToggle() {
     this.$vuetify.theme.dark = !this.$vuetify.theme.dark
+    localStorage.setItem('isDark', this.$vuetify.theme.dark.toString())
   }
 }
 export default AppHeader
