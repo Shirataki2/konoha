@@ -7,6 +7,9 @@ import asyncio
 import subprocess
 import tabulate
 import aiomysql
+import glob
+from PIL import Image, ImageDraw, ImageFont
+from typing import Optional
 from pathlib import Path
 from time import perf_counter
 
@@ -15,6 +18,7 @@ import konoha.models.crud as q
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
+from konoha.core.converters import DurationToSecondsConverter, ColorConverter
 from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
 
@@ -30,6 +34,7 @@ class Bot(commands.Cog):
     '''
     Botに関する基本的な設定や機能
     '''
+    order = 0
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
@@ -51,12 +56,14 @@ class Bot(commands.Cog):
         discord_dur, _ = await get_duration(
             self.bot.session.get, "https://discord.com/"
         )
+        loading = self.bot.custom_emojis.loading
         embed = discord.Embed(
-            color=config.theme_color).set_author(name="⏳計測中...")
+            color=config.theme_color, title=f"{loading} 計測中")
+        embed.set_author(name="ping", icon_url=self.bot.user.avatar_url)
         message_dur, message = await get_duration(
             ctx.send, embed=embed
         )
-        embed.set_author(name='🏓 Pong!', icon_url=self.bot.user.avatar_url)
+        embed.title = '🏓 Pong!'
         embed.description = f"{self.bot.user.mention}は正常稼働中です"
         embed.add_field(name="Websocket遅延",
                         value=f"{self.bot.latency * 1000:.2f} ms")
@@ -224,6 +231,18 @@ class Bot(commands.Cog):
             name='公開状態', value=f'{"Public" if appinfo.bot_public else "Private" }')
         embed.add_field(name='ID', value=f'{appinfo.id}')
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def tmp(self, ctx: commands.Context):
+        embed = discord.Embed(title="Hoge")
+        embed.add_field(name="test", value="test")
+        embed.add_field(name="piyo", value="fuga")
+        embed.add_field(name="foo", value="bar")
+        msg = await ctx.send(embed=embed)
+        indices = [i for i, field in enumerate(
+            embed._fields) if field["name"] == "piyo"]
+        embed.set_field_at(indices[0], name="piyopiyo", value="fugafuga")
+        await msg.edit(embed=embed)
 
 
 def setup(bot):

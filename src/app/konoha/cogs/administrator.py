@@ -27,6 +27,7 @@ class Administrator(commands.Cog):
     """
     Bot管理用のコマンド
     """
+    order = 999
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
@@ -173,9 +174,9 @@ class Administrator(commands.Cog):
             if s < 120:
                 return f"{s:3d} 秒"
             elif s < 60 * 120:
-                return f"{s // 60:3d} 分 {s:3d} 秒"
+                return f"{s // 60:3d} 分 {s % 60:3d} 秒"
             elif s < 60 * 60 * 24 * 2:
-                return f"{s // (60*60):2d} 時間 {s // 60:3d} 分 {s:3d} 秒"
+                return f"{s // (60*60):2d} 時間 {(s % 3600)// 60:3d} 分 {s % 60:3d} 秒"
             elif s < 60 * 60 * 24 * 365:
                 return f"{s // (60*60*24):3d} 日 {(s % (60*60*24)) // 3600:2d} 時間"
             else:

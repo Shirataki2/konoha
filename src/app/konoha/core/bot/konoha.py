@@ -6,6 +6,7 @@ import secrets
 
 from konoha.core import config
 from konoha.core.bot.base import BotBase
+from konoha.core.bot.emoji import CustomEmoji
 from konoha.core.log.logger import get_module_logger
 import konoha.models.crud as q
 
@@ -15,6 +16,7 @@ logger = get_module_logger(__name__)
 class Konoha(BotBase):
     def __init__(self, *args, **kwargs):
         super().__init__(command_prefix=self.get_prefix, *args, **kwargs)
+        self.custom_emojis = CustomEmoji(self)
 
     async def send_notification(self, ctx: commands.Context, title: str, description: str = None):
         embed = discord.Embed(

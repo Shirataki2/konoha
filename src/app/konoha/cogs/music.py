@@ -34,6 +34,7 @@ class Music(commands.Cog):
 
     5. **YoutubeのURLを直接入力することでも再生可能です**
     """
+    order = 4
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot

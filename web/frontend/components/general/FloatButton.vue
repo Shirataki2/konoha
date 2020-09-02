@@ -31,7 +31,7 @@ class FloatButton extends Vue {
   }
 
   goToTop() {
-    this.$vuetify.goTo(0)
+    this.$vuetify.goTo(60)
   }
 }
 export default FloatButton

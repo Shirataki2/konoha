@@ -39,6 +39,7 @@ class Reaction(commands.Cog):
     """
     リアクション機能を用いた便利機能です
     """
+    order = 2
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot

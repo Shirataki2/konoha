@@ -40,11 +40,22 @@ class ColoredLogger(logging.Logger):
             return self._log(logging.CRITICAL, self._error(msg), args, **kwargs)
 
 
-def get_module_logger(modname) -> ColoredLogger:
-    logging.setLoggerClass(ColoredLogger)
+logging.setLoggerClass(ColoredLogger)
+
+handler = logging.StreamHandler()
+
+discord_logger = logging.getLogger('discord')
+discord_logger.setLevel(logging.INFO)
+discord_logger.addHandler(handler)
+
+aio_logger = logging.getLogger('asyncio')
+aio_logger.setLevel(logging.DEBUG)
+aio_logger.addHandler(handler)
+
+
+def get_module_logger(modname):
     logger = logging.getLogger(modname)
-    handler = logging.StreamHandler()
-    logger_format = "%(asctime)s %(name)s[%(lineno)4d] - %(levelname)8s: %(message)s"
+    logger_format = "%(asctime)s %(name)28s[%(lineno)4d] - %(levelname)8s: %(message)s"
     date_format = "%Y/%m/%d %H:%M:%S"
     formatter = logging.Formatter(logger_format, datefmt=date_format)
     handler.setFormatter(formatter)

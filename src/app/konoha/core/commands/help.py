@@ -54,8 +54,8 @@ class CustomHelpCommand(commands.HelpCommand):
     async def send_bot_help(self, mapping):
         ctx = self.context
         bot = ctx.bot
-        cogs = list(bot.cogs)
-        cogs.sort()
+        cogs = [bot.get_cog(cog) for cog in bot.cogs]
+        cogs.sort(key=lambda cog: cog.order)
         paginator = EmbedPaginator(
             footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",
             author="Help | Page $p / $P",
@@ -63,8 +63,7 @@ class CustomHelpCommand(commands.HelpCommand):
             color=config.theme_color
         )
         i = -1
-        for cog_name in cogs:
-            cog = bot.get_cog(cog_name)
+        for cog in cogs:
             commands = [command for command in await self.filter_commands(bot.commands)]
             runnables = []
             for c in cog.walk_commands():

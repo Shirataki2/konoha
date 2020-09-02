@@ -18,7 +18,7 @@ run 'cd ../..'
 
 if [ $1 = '--dev' ]; then
 run 'pwd'
-run 'nodemon -e py,ini --ignore konoha/models/versions --exec python -m konoha config.ini'
+run 'nodemon --signal SIGINT -e py,ini --ignore konoha/models/versions --exec python -m konoha config.ini'
 else
 run 'python -m konoha config.ini'
 fi

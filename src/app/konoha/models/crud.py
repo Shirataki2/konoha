@@ -14,7 +14,7 @@ logger = get_module_logger(__name__)
 class DB:
     async def __aenter__(self):
         loop = asyncio.get_event_loop()
-        engine = await create_engine(
+        self.engine = await create_engine(
             user=config.db_user,
             db=config.db_name,
             host=config.db_host,
@@ -23,11 +23,13 @@ class DB:
             autocommit=True,
             loop=loop
         )
-        self._conn = await engine.acquire()
+        self._conn = await self.engine.acquire()
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
         await self._conn.close()
+        self.engine.close()
+        await self.engine.wait_closed()
 
     async def execute(self, query, *args, **kwargs):
         return await self._conn.execute(query, *args, **kwargs)
@@ -38,11 +40,11 @@ class CRUDBase:
     async def execute(query, verbose=1, *args, **kwargs):
         if verbose:
             logger.debug("DB接続開始")
-        async with DB() as db:
             if verbose:
                 s = str(query)
                 for l in s.split("\n"):
                     logger.debug(f"\t{l}")
+        async with DB() as db:
             result = await db.execute(query)
         if verbose:
             logger.debug("DB接続終了")

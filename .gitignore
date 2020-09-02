@@ -8,3 +8,5 @@ alembic.ini
 *.wav
 *.ttf
 src/app/konoha/api/main_.py
+*.otf
+src/app/test.png

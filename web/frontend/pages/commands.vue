@@ -9,7 +9,7 @@
       <v-divider />
       <v-row>
         <v-col class="hidden-xs-only" sm="3" md="3" lg="3" offset-lg="1">
-          <div style="position: sticky; top: 60px;">
+          <div style="position: sticky; top: 65px;">
             <v-list v-if="pages.length">
               <v-list-item-group v-model="currentPage" color="blue" mandatory>
                 <v-list-item
@@ -82,7 +82,11 @@ class Commands extends Vue {
 
   async onCogClicked() {
     await this.$nextTick()
-    this.$vuetify.goTo('#content', { duration: 500, easing: 'easeInOutCubic' })
+    this.$vuetify.goTo('#content', {
+      duration: 500,
+      easing: 'easeInOutCubic',
+      offset: 10,
+    })
   }
 
   onCogSelected(selected) {

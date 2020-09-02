@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands, tasks
 
 import asyncio
+import traceback
 from pytz import timezone
 from datetime import datetime
 from pybooru import Danbooru
@@ -19,6 +20,7 @@ class Reminder(commands.Cog):
     '''
     指定時間にイベントを通知する機能です
     '''
+    order = 5
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
@@ -225,24 +227,28 @@ class Reminder(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def notification_task(self):
-        for notification in self.notifications:
-            reminders = await q.Reminder.search_between_minutes(notification["before"], verbose=0)
-            for reminder in reminders:
-                c = await q.Reminder.get_config_from_id(reminder.config, verbose=2)
-                guild: discord.Guild = await self.bot.fetch_guild(c.guild)
-                channel: discord.TextChannel = await self.bot.fetch_channel(c.channel)
-                embed = discord.Embed(
-                    title=reminder.content,
-                    description=(
-                        f"` 開催日時 `: {reminder.start_at.strftime('%Y/%m/%d %H:%M')}\n"
-                        f"`  記入者  `: {(await guild.fetch_member(int(reminder.user))).mention}\n"
-                        f"`イベントID`: {reminder.id:05d}\n"
-                        f"` 登録日時 `: {reminder.created_at.astimezone(timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M')}"
-                    ),
-                    color=notification["color"]
-                )
-                embed.set_author(name=notification["message"])
-                await channel.send(embed=embed)
+        try:
+            for notification in self.notifications:
+                reminders = await q.Reminder.search_between_minutes(notification["before"], verbose=0)
+                for reminder in reminders:
+                    c = await q.Reminder.get_config_from_id(reminder.config, verbose=2)
+                    guild: discord.Guild = await self.bot.fetch_guild(c.guild)
+                    channel: discord.TextChannel = await self.bot.fetch_channel(c.channel)
+                    embed = discord.Embed(
+                        title=reminder.content,
+                        description=(
+                            f"` 開催日時 `: {reminder.start_at.strftime('%Y/%m/%d %H:%M')}\n"
+                            f"`  記入者  `: {(await guild.fetch_member(int(reminder.user))).mention}\n"
+                            f"`イベントID`: {reminder.id:05d}\n"
+                            f"` 登録日時 `: {reminder.created_at.astimezone(timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M')}"
+                        ),
+                        color=notification["color"]
+                    )
+                    embed.set_author(name=notification["message"])
+                    await channel.send(embed=embed)
+        except Exception as e:
+            logger.error("Notification Loop中にエラーが発生")
+            print(traceback.format_exc())
 
 
 def setup(bot):

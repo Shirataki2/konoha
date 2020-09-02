@@ -24,6 +24,7 @@ class GlobalChat(commands.Cog):
 
     失礼な言動等を見かけた場合には`{prefix}gc report (ユーザー)`で通報してください
     '''
+    order = 3
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot

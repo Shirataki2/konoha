@@ -72,10 +72,7 @@
         </v-menu>
       </div>
       <div v-else>
-        <v-btn text active-class="no-active" @click="themeToggle">
-          <v-icon v-text="themeIcon" />
-        </v-btn>
-        <v-btn :href="oauth2Url" text nuxt active-class="no-active">
+        <v-btn to="/login" text nuxt active-class="no-active">
           <v-icon>mdi-login</v-icon>
           Login
         </v-btn>
@@ -98,7 +95,6 @@ class AppHeader extends Vue {
   drawer = false
   show = false
 
-  oauth2Url = process.env.login_url || '/'
   get isLogin() {
     return this.$store.getters['auth/user'] !== null
   }

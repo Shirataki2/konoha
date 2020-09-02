@@ -20,6 +20,7 @@ class BotBase(commands.Bot):
     def __init__(self, *args, **kwargs):
         super(BotBase, self).__init__(
             help_command=CustomHelpCommand(), *args, **kwargs)
+        self.loop.slow_callback_duration = 0.02
         self.get_all_cogs()
 
     @property
@@ -78,6 +79,8 @@ class BotBase(commands.Bot):
             self.loop.run_until_complete(self.start(config.bot_token))
         except discord.LoginFailure:
             logger.critical("Discord Tokenが不正です")
+        except KeyboardInterrupt:
+            logger.error("Keyboard Interrupt")
         except:
             logger.critical("不明なエラーが発生しました", exc_info=True)
         finally:

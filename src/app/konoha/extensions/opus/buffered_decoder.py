@@ -10,6 +10,10 @@ import os
 from pathlib import Path
 from subprocess import Popen, PIPE
 from konoha.extensions.opus.opus import Decoder
+from konoha.core.log.logger import get_module_logger
+from functools import partial
+
+logger = get_module_logger(__name__)
 
 
 class PacketQueue(asyncio.Queue):
@@ -36,6 +40,7 @@ class BufferedDecoder:
         self.buffer = PacketQueue(buffer_size)
         self.last = None
         self.decoded = asyncio.Event()
+        self.loop = asyncio.get_event_loop()
 
     async def push(self, packet):
         await self.buffer.put(packet)
@@ -57,13 +62,14 @@ class BufferedDecoder:
                     f.writeframes(self.decoder.decode(pkt.decrypted))
                 else:
                     data = self.decoder.decode(pkt.decrypted)
+                    logger.debug(str(pkt))
                     elapsed = (pkt.timestamp - self.last) / \
                         Decoder.SAMPLING_RATE
                     if elapsed > 0.02:
                         margin = bytes(2*int(Decoder.SAMPLE_SIZE *
                                              (elapsed - 0.02) *
                                              Decoder.SAMPLING_RATE))
-                        f.writeframes(margin)
+                        await self.loop.run_in_executor(None, partial(f.writeframes, margin))
                     f.writeframes(data)
                 self.last = pkt.timestamp
         except asyncio.CancelledError:

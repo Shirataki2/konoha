@@ -60,3 +60,48 @@ description: 010 - ユーモラスなコマンド群です
 </div>
 </command>
 
+<command 
+  name="emocre"
+  :aliases="['create_emoji']"
+  :roles="[{name: 'サーバーOnly', color: 'green'}]"
+  :usages="['!emocre 完全;理解 red-accent-3 mincho-black', '!create_emoji わかる #3760f5 maru white']"
+  rate="30秒あたり5回まで">
+<div>
+
+  `!emocre <text> [color] [font] [bg_color]`
+
+指定した文字から絵文字として使える128x128の画像を生成します．
+
+文字は最大12文字まで指定可能です．デフォルトでは指定した文字は改行されませんが改行を示す文字"`;`"を`text`中に指定することで改行することができます．改行文字は12文字制限カウントには含まれません．
+
+例:
+
+`!emocre 完全理解 red-accent-3 mincho-black`
+
+![](https://cdn.discordapp.com/attachments/739863321590628474/750631514928054312/emoji.png)
+
+`!emocre 完全;理解 red-accent-3 mincho-black`
+
+![](https://cdn.discordapp.com/attachments/739863321590628474/750631577633030144/emoji.png)
+
+
+`color`と`bg_color`はそれぞれ文字と背景の色を指定します．
+
+色の指定は[Vuetifyにおける色指定](https://vuetifyjs.com/ja/styles/colors/)を使用することが可能です．`red`や`blue-darken-2`などのように指定することで，文字色や背景色を指定することが可能です．
+
+その他`#e95`や`#ff2e`，`#f35050`，`#e4e4e477`のように直接カラーコードを指定することも可能です．
+
+`font`は文字のフォントを指定します．現在以下のフォントを使用可能です．
+
+|引数名|フォント名|
+|:--|:--|
+|`gothic`|Noto Sans CJK jp Bold|
+|`gothic-black`|Noto Sans CJK jp Black|
+|`mincho`|Noto Serif CJK jp Bold|
+|`mincho-black`|Noto Serif CJK jp Black|
+|`maru`|Rounded M+ 1p Black|
+|`851`|851チカラヅヨク|
+
+</div>
+</command>
+

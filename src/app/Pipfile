@@ -12,7 +12,7 @@ mypy = "*"
 discord-py = "*"
 sqlalchemy = "*"
 alembic = "*"
-aiomysql = "*"
+aiomysql = {git = "https://github.com/aio-libs/aiomysql", ref = "d842ec3f95614a2042a9107d7b65edfcf661d614"}
 colorama = "*"
 tabulate = "*"
 pybooru = "*"

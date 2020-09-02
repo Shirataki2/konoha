@@ -85,9 +85,25 @@ pre::before {
 }
 
 code {
-  background: #444 !important;
+  background: #222 !important;
   color: #fff !important;
   padding: 4px 0 !important;
   margin: 0 4px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+table th,
+table td {
+  padding: 10px 0;
+  text-align: center;
+}
+
+table tr:nth-child(even) {
+  background-color: #333;
 }
 </style>

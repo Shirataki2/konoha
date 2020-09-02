@@ -4,8 +4,10 @@ from discord.ext import commands, tasks
 import asyncio
 import re
 import io
+import os
 import aiohttp
 import random
+import secrets
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 from typing import Optional, Pattern
@@ -14,6 +16,8 @@ import konoha.models.crud as q
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
+from konoha.core.converters import ColorConverter, FontConverter
+from konoha.core.utils import TextImageGenerator
 from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
 
@@ -29,6 +33,7 @@ class Fun(commands.Cog):
     '''
     娯楽的なコマンドたちです
     '''
+    order = 1
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
@@ -44,7 +49,7 @@ class Fun(commands.Cog):
 
         画像を/imagesに保存すると帰ってきます
         '''
-        ptn: Pattern[str] = re.compile('```(.*)?\n((.|\s)*)?```')
+        ptn: Pattern[str] = re.compile(r'```(.*)?\n((.|\s)*)?```')
         codes = ptn.findall(code)
         if len(codes) == 1:
             _code = codes[0]
@@ -119,7 +124,8 @@ class Fun(commands.Cog):
                 ", ".join([f"`{l}`" for l in supported_langs]) +
                 " のいずれかをtargetの引数として与えてください"
             )
-        embed = discord.Embed(title="翻訳中...", color=config.theme_color)
+        loading = self.bot.custom_emojis.loading
+        embed = discord.Embed(title=f"翻訳中 {loading}", color=config.theme_color)
         embed.set_author(name="DeepL APIを利用しています",
                          url="https://www.deepl.com/home",
                          icon_url="https://www.clker.com/cliparts/E/W/z/w/n/B/deepl.svg.med.png")
@@ -169,24 +175,35 @@ class Fun(commands.Cog):
                 ", ".join([f"`{l}`" for l in supported_langs])
             )
 
-    @commands.command(hidden=True)
-    @commands.is_owner()
-    async def tapi(self, ctx: commands.Context):
-        '''
-        [DeepL API](https://www.deepl.com/home)の利用状況を得ます
-        '''
-        with ctx.typing():
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                        'https://api.deepl.com/v2/usage', params={
-                            'auth_key': config.deepl_apikey,
-                        }) as resp:
-                    data = await resp.json()
-            return await self.bot.send_notification(
-                ctx, "DeepL API利用状況",
-                f"{data['character_count']} / 100000\n\n" +
-                f"大体 {data['character_count'] / 1000000 * 2500}円くらい"
+    @commands.command(aliases=["create_emoji"])
+    @commands.cooldown(5, 30, commands.BucketType.guild)
+    async def emocre(self, ctx: commands.Context, text,
+                     color: Optional[ColorConverter],
+                     font: Optional[FontConverter],
+                     background: Optional[ColorConverter],
+                     ):
+        """
+        引数に与えられた文字を絵文字化します．改行したい場合は`;`を入力してください
+        """
+        if len(text.replace(";", "")) > 12:
+            return await self.bot.send_error(
+                ctx, "最大文字数を超過しています",
+                "最大12文字まで絵文字に変換することが可能です"
             )
+        if color is None:
+            color = (244, 67, 54)  # type: ignore
+        if background is None:
+            background = (0, 0, 0, 0)  # type: ignore
+        if font is None:
+            font = "./fonts/NotoSansCJKjp-Bold.otf", 34  # type: ignore
+        gen = TextImageGenerator(
+            font[0], text, fg_color=color, bg_color=background, offset=font[1])  # type: ignore
+        img = await self.bot.loop.run_in_executor(None, gen.render)
+        fp = io.BytesIO()
+        img.save(fp, "PNG")
+        fp.seek(0)
+        file = discord.File(fp, filename="emoji.png")
+        await ctx.send(file=file)
 
 
 def setup(bot):

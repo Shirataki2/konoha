@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 import asyncio
 import aiohttp
 import random
+from functools import partial
 from pybooru import Danbooru
 
 import konoha.models.crud as q
@@ -14,6 +15,8 @@ logger = get_module_logger(__name__)
 
 
 class Images(commands.Cog):
+    order = 999999
+
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
         self.client = Danbooru(
@@ -60,24 +63,25 @@ class Images(commands.Cog):
     async def postloop(self):
         try:
             for hook in await q.Hook.get_all(verbose=2):
+                posts = []
+                while len(posts) == 0:
+                    p = random.randint(1, 2000)
+                    fn = partial(self.client.post_list,
+                                 tags=hook.tags, page=p, limit=2)
+                    posts = await self.bot.loop.run_in_executor(None, fn)
+                    await asyncio.sleep(0.1)
+                post = random.choice(posts)
+                try:
+                    fileurl = post['file_url']
+                except:
+                    fileurl = 'https://danbooru.donmai.us' + post['source']
+                embed = discord.Embed(title='щ（゜ロ゜щ）')
+                embed.set_image(url=fileurl)
                 async with aiohttp.ClientSession() as session:
                     webhook = discord.Webhook.from_url(
                         hook.hookurl,
                         adapter=discord.AsyncWebhookAdapter(session)
                     )
-                    posts = []
-                    while len(posts) == 0:
-                        p = random.randint(1, 2000)
-                        posts = self.client.post_list(
-                            tags=hook.tags, page=p, limit=20)
-                        await asyncio.sleep(0.2)
-                    post = random.choice(posts)
-                    try:
-                        fileurl = post['file_url']
-                    except:
-                        fileurl = 'https://danbooru.donmai.us' + post['source']
-                    embed = discord.Embed(title='щ（゜ロ゜щ）')
-                    embed.set_image(url=fileurl)
                     await webhook.send(embed=embed)
         except Exception as e:
             logger.warn("Webhook送信中にエラーが発生しました")
