@@ -159,6 +159,10 @@ class VoiceState:
             self.queue.put_nowait(self.cur)
         self.play.set()
 
+    def skip(self):
+        if self.is_playing:
+            self.vc.stop()
+
     async def stop(self):
         self.queue.clear()
         if self.vc:

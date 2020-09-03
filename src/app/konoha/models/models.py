@@ -74,3 +74,15 @@ vote = Table(
     Column("user", String(24), nullable=False),
     Column("description", String(3000), nullable=False),
 )
+
+
+timer = Table(
+    "timer",
+    meta,
+    Column("id", String(16), nullable=False,
+           primary_key=True),
+    Column("event", String(64), nullable=False),
+    Column("payload", String(2048), nullable=False),
+    Column("expire_at", DateTime, nullable=False),
+    Column("created_at", DateTime, nullable=False),
+)

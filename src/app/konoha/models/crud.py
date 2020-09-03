@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pytz import timezone
 from datetime import datetime, timedelta
 from sqlalchemy.sql import and_, select, func
@@ -375,3 +376,41 @@ class Vote(CRUDBase):
             and_(*[v == getattr(models.vote.c, k) for k, v in kwargs.items()]))
         result = await CRUDBase.execute(q, verbose)
         return await result.fetchall()
+
+
+class Timer(CRUDBase):
+    def __init__(self, id):
+        self.id = id
+
+    async def get(self, verbose=1):
+        q = models.timer.select().where(self.id == models.timer.c.id)
+        result = await self.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def create(cls, id, event, expire_at, payload, verbose=1):
+        q = models.timer.insert(None).values(
+            id=id,
+            event=event,
+            payload=json.dumps(payload),
+            expire_at=expire_at,
+            created_at=datetime.now().astimezone(timezone('Asia/Tokyo'))
+        )
+        await cls.execute(q, verbose)
+        return cls(id)
+
+    @classmethod
+    async def get_next(cls, cap_day, verbose=1):
+        q = models.timer.select().where(and_(
+            datetime.now().astimezone(timezone('Asia/Tokyo')) + timedelta(days=cap_day)
+            >= models.timer.c.expire_at
+        )).order_by(models.timer.c.expire_at).limit(1)
+        result = await cls.execute(q, verbose)
+        return await result.fetchone()
+
+    async def delete(self, verbose=1):
+        q = models.timer.delete(None).where(
+            models.timer.c.id == self.id
+        )
+        await self.execute(q, verbose)
+        return self

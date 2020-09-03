@@ -167,6 +167,7 @@ class GlobalChat(commands.Cog):
     async def on_message(self, message: discord.Message):
         if message.author.bot or message.guild is None:
             return
+        await asyncio.sleep(0.2)
         guild = await q.Guild(message.guild.id).get(verbose=2)
         if int(guild.gc_channel) != message.channel.id:
             return

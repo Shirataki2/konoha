@@ -5,6 +5,7 @@ import traceback
 import secrets
 
 from konoha.core import config
+from konoha.extensions.utils.timer import Timer
 from konoha.core.bot.base import BotBase
 from konoha.core.bot.emoji import CustomEmoji
 from konoha.core.log.logger import get_module_logger
@@ -16,6 +17,8 @@ logger = get_module_logger(__name__)
 class Konoha(BotBase):
     def __init__(self, *args, **kwargs):
         super().__init__(command_prefix=self.get_prefix, *args, **kwargs)
+        self.timer = Timer()
+        self.timer.start(self)
         self.custom_emojis = CustomEmoji(self)
 
     async def send_notification(self, ctx: commands.Context, title: str, description: str = None):
@@ -77,7 +80,7 @@ class Konoha(BotBase):
             logger.error(
                 f"[DM] [{ctx.author.id}] [{error.__class__.__name__}]"
             )
-        logger.error(str(error))
+        logger.error(str(error), exc_info=True)
         if hasattr(ctx, 'handled'):
             return
         if isinstance(error, commands.errors.CommandNotFound):
@@ -96,6 +99,8 @@ class Konoha(BotBase):
         try:
             raise error
         except:
+            logger.error('*' * 60)
+            logger.error(str(error), exc_info=True)
             tb = traceback.format_exc()
             if len(tb) > 1800:
                 tb = tb[-1800:]

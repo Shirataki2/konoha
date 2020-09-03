@@ -8,6 +8,8 @@ import subprocess
 import tabulate
 import aiomysql
 import glob
+import json
+from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional
 from pathlib import Path
@@ -63,12 +65,19 @@ class Bot(commands.Cog):
         message_dur, message = await get_duration(
             ctx.send, embed=embed
         )
+        db_dur, g = await get_duration(
+            q.Guild(ctx.guild.id).get
+        )
         embed.title = '🏓 Pong!'
         embed.description = f"{self.bot.user.mention}は正常稼働中です"
         embed.add_field(name="Websocket遅延",
-                        value=f"{self.bot.latency * 1000:.2f} ms")
-        embed.add_field(name="API通信遅延", value=f"{discord_dur:.2f} ms")
-        embed.add_field(name="メッセージ送信遅延", value=f"{message_dur:.2f} ms")
+                        value=f"{self.bot.latency * 1000:.2f} ms", inline=False)
+        embed.add_field(
+            name="API通信遅延", value=f"{discord_dur:.2f} ms", inline=False)
+        embed.add_field(name="メッセージ送信遅延",
+                        value=f"{message_dur:.2f} ms", inline=False)
+        embed.add_field(name="データベース通信遅延",
+                        value=f"{db_dur:.2f} ms", inline=False)
         await message.edit(embed=embed)
 
     @commands.command(name="?")
@@ -143,6 +152,28 @@ class Bot(commands.Cog):
         await ctx.send(f"{seconds:.1f}秒のタイマーを設定しました")
         await asyncio.sleep(seconds)
         await ctx.send(f"{ctx.author.mention} {seconds:.1f}秒間経過しました!")
+
+    @commands.command()
+    async def timer2(self, ctx: commands.Context, duration: DurationToSecondsConverter):
+        '''
+        指定した秒数後にあなた宛てにメンションを送信します
+        '''
+        if duration["seconds"] < 0:
+            return await ctx.send("負の時間待たせるとはどういうことなのでしょう(哲学)")
+        await self.bot.timer.create_event(
+            'timer',
+            datetime.utcnow() + timedelta(seconds=duration["seconds"]),
+            {"mention": str(ctx.author.mention), "channel": str(
+                ctx.channel.id), "timer": duration}
+        )
+        await ctx.send(f"{duration['original']}のタイマーを設定しました")
+
+    @commands.Cog.listener()
+    async def on_timer_completed(self, payload):
+        payload = json.loads(payload)
+        channel = await self.bot.fetch_channel(payload['channel'])
+        if channel:
+            await channel.send(f'{payload["mention"]} {payload["timer"]["original"]}経過しました')
 
     @commands.command(aliases=["server"])
     @commands.guild_only()

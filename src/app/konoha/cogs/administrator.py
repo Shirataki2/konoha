@@ -3,11 +3,15 @@ from discord.ext import commands
 
 import re
 import os
+import io
 import subprocess
 import tabulate
 import aiomysql
 import psutil
 import platform
+import textwrap
+import traceback
+from contextlib import redirect_stdout
 from pathlib import Path
 from pytz import timezone
 from datetime import datetime
@@ -31,10 +35,19 @@ class Administrator(commands.Cog):
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
+        self._last_result = None
+
+    def cleanup_code(self, content):
+        """Automatically removes code blocks from the code."""
+        # remove ```py\n```
+        if content.startswith('```') and content.endswith('```'):
+            return '\n'.join(content.split('\n')[1:-1])
+
+        # remove `foo`
+        return content.strip('` \n')
 
     @commands.is_owner()
     @commands.command()
-    @commands.cooldown(1, 1)
     async def reload(self, ctx: commands.Context):
         '''
         Cogを再読み込みします
@@ -247,6 +260,47 @@ class Administrator(commands.Cog):
             page=p
         )
         await paginator.paginate(ctx)
+
+    @commands.command()
+    async def do(self, ctx: commands.Context, *, body: str):
+        env = {
+            'bot': self.bot,
+            'ctx': ctx,
+            'channel': ctx.channel,
+            'guild': ctx.guild,
+            'message': ctx.message,
+            '_': self._last_result,
+        }
+        env.update(globals())
+        body = self.cleanup_code(body)
+        cmd = f'async def func():\n{textwrap.indent(body, "  ")}'
+        try:
+            exec(cmd, env)
+        except Exception as e:
+            return await self.bot.send_error(ctx, f'{e.__class__.__name__}', str(e))
+        func = env['func']
+        stdout = io.StringIO()
+        try:
+            with redirect_stdout(stdout):
+                ret = await func()
+        except Exception as e:
+            value = stdout.getvalue()
+            return await self.bot.send_error(
+                ctx, f'{e.__class__.__name__}',
+                f'```py\n{value}{traceback.format_exc()[:3000]}\n```'
+            )
+        else:
+            value = stdout.getvalue()
+            try:
+                ctx.message.add_reaction('✅')
+            except:
+                pass
+            if ret is None:
+                if value:
+                    await ctx.send(f'```py\n{value}\n```')
+            else:
+                self._last_result = ret
+                await ctx.send(f'```py\n{value}{ret}\n```')
 
 
 def setup(bot):
