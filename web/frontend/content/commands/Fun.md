@@ -6,11 +6,11 @@ description: 010 - ユーモラスなコマンド群です
 <command 
   name="shellgei"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!shellgei echo Hello', '!shellgei \n```sh\nyes 高須クリニック\n```']"
+  :usages="['k:shellgei echo Hello', 'k:shellgei \n```sh\nyes 高須クリニック\n```']"
   rate="10分あたり20回まで">
 <div>
 
-  `!shellgei <source>`
+  `k:shellgei <source>`
 
 シェルスクリプトを実行しちゃう危険なコマンド
 
@@ -31,11 +31,11 @@ description: 010 - ユーモラスなコマンド群です
 <command 
   name="translate"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!translate JA Hello', '!translate DE 人民の人民による人民のための政治']"
+  :usages="['k:translate JA Hello', 'k:translate DE 人民の人民による人民のための政治']"
   rate="2分あたり2回まで / 全サーバー合計10万字以下">
 <div>
 
-  `!translate <target_lang> <text>`
+  `k:translate <target_lang> <text>`
 
 [DeepL API](https://www.deepl.com/)を利用して文章を翻訳します．
 
@@ -64,11 +64,11 @@ description: 010 - ユーモラスなコマンド群です
   name="emocre"
   :aliases="['create_emoji']"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!emocre 完全;理解 red-accent-3 mincho-black', '!create_emoji わかる #3760f5 maru white']"
+  :usages="['k:emocre 完全;理解 red-accent-3 mincho-black', 'k:create_emoji わかる #3760f5 maru white']"
   rate="30秒あたり5回まで">
 <div>
 
-  `!emocre <text> [color] [font] [bg_color]`
+  `k:emocre <text> [color] [font] [bg_color]`
 
 指定した文字から絵文字として使える128x128の画像を生成します．
 
@@ -76,11 +76,11 @@ description: 010 - ユーモラスなコマンド群です
 
 例:
 
-`!emocre 完全理解 red-accent-3 mincho-black`
+`k:emocre 完全理解 red-accent-3 mincho-black`
 
 ![](https://cdn.discordapp.com/attachments/739863321590628474/750631514928054312/emoji.png)
 
-`!emocre 完全;理解 red-accent-3 mincho-black`
+`k:emocre 完全;理解 red-accent-3 mincho-black`
 
 ![](https://cdn.discordapp.com/attachments/739863321590628474/750631577633030144/emoji.png)
 

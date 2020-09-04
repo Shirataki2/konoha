@@ -6,7 +6,7 @@ description: 900 - Botの管理用のコマンドです
 <command 
 name="reload"
 :roles="[{name: 'Bot管理者', color: 'red'}]"
-:usages="['!reload']">
+:usages="['k:reload']">
 <div>
 
 Botの機能拡張を再読み込みします
@@ -18,8 +18,7 @@ Botの機能拡張を再読み込みします
 name="sql"
 :roles="[{name: 'Bot管理者', color: 'red'}]"
 :usages="[
-  '!sql SELECT * FROM guild;',
-  '!sql UPDATE guild SET prefix = `$` WHERE guild = 702410364102;'
+  'k:sql SELECT * FROM guild;',
 ]">
 <div>
 
@@ -35,8 +34,8 @@ name="error_log"
 :aliases="['e']"
 :roles="[{name: 'Bot管理者', color: 'red'}]"
 :usages="[
-  '!error_log 91527c8535f12e9ef001447d',
-  '!e 91527c8535f12e9ef001447d',
+  'k:error_log 91527c8535f12e9ef001447d',
+  'k:e 91527c8535f12e9ef001447d',
 ]">
 <div>
 
@@ -49,7 +48,7 @@ name="error_log"
 name="status"
 :roles="[{name: 'Bot管理者', color: 'red'}]"
 :usages="[
-  '!status',
+  'k:status',
 ]">
 <div>
 

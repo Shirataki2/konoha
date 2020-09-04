@@ -6,11 +6,11 @@ description: 800 - 音楽再生機能
 <command 
   name="join"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!join']">
+  :usages="['k:join']">
 
 <div>
 
-  `!join`
+  `k:join`
 
 Botをボイスチャンネルへと入室させます．
 
@@ -23,11 +23,11 @@ Botをボイスチャンネルへと入室させます．
 <command 
   name="leave"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!leave']">
+  :usages="['k:leave']">
 
 <div>
 
-  `!leave`
+  `k:leave`
 
 Botをボイスチャンネルから退出させます．
 
@@ -40,11 +40,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="volume"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!volume 100', '!volume 30']">
+  :usages="['k:volume 100', 'k:volume 30']">
 
 <div>
 
-  `!volume <volume>`
+  `k:volume <volume>`
 
 再生音量を`0～300 %`までパーセントで指定して変更します．
 
@@ -55,11 +55,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="pause"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!pause']">
+  :usages="['k:pause']">
 
 <div>
 
-  `!pause`
+  `k:pause`
 
 音楽再生を一時停止します．
 
@@ -70,11 +70,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="resume"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!resume']">
+  :usages="['k:resume']">
 
 <div>
 
-  `!resume`
+  `k:resume`
 
 音楽再生を再開します．
 
@@ -85,11 +85,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="play"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!play 潮風']">
+  :usages="['k:play 潮風']">
 
 <div>
 
-  `!play <曲名>`
+  `k:play <曲名>`
 
 音楽を検索し，プレイリストに挿入します．
 
@@ -100,11 +100,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="stop"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!stop']">
+  :usages="['k:stop']">
 
 <div>
 
-  `!stop`
+  `k:stop`
 
 音楽の再生を止め，プレイリストを空にします．
 
@@ -115,11 +115,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="skip"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!skip']">
+  :usages="['k:skip']">
 
 <div>
 
-  `!skip`
+  `k:skip`
 
 曲をスキップします．
 
@@ -131,11 +131,11 @@ Botをボイスチャンネルから退出させます．
   name="queue"
   :aliases="['playlist']"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!queue']">
+  :usages="['k:queue']">
 
 <div>
 
-  `!queue`
+  `k:queue`
 
 プレイリストを表示します
 
@@ -146,11 +146,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="shuffle"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!shuffle']">
+  :usages="['k:shuffle']">
 
 <div>
 
-  `!shuffle`
+  `k:shuffle`
 
 プレイリストをシャッフルします
 
@@ -161,11 +161,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="remove"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!remove 2']">
+  :usages="['k:remove 2']">
 
 <div>
 
-  `!remove <index>`
+  `k:remove <index>`
 
 プレイリストの`index`番目の曲を削除します．
 
@@ -178,11 +178,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="loop"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!loop']">
+  :usages="['k:loop']">
 
 <div>
 
-  `!loop`
+  `k:loop`
 
 再生中の曲をループします
 
@@ -193,11 +193,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="loop_queue"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!loop_queue']">
+  :usages="['k:loop_queue']">
 
 <div>
 
-  `!loop_queue`
+  `k:loop_queue`
 
 プレイリスト中の曲をループします
 
@@ -208,11 +208,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="rec"
   :roles="[{name: 'サーバーOnly', color: 'green'},{name: 'メッセージ編集権限', color: 'purple'}]"
-  :usages="['!rec']">
+  :usages="['k:rec']">
 
 <div>
 
-  `!rec`
+  `k:rec`
 
 ボイスチャットの録音を開始します．
 
@@ -225,11 +225,11 @@ Botをボイスチャンネルから退出させます．
 <command 
   name="recstop"
   :roles="[{name: 'サーバーOnly', color: 'green'},{name: 'メッセージ編集権限', color: 'purple'}]"
-  :usages="['!recstop']">
+  :usages="['k:recstop']">
 
 <div>
 
-  `!recstop`
+  `k:recstop`
 
 ボイスチャットの録音を終了します．
 

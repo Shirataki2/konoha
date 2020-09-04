@@ -39,7 +39,7 @@ class BotBase(commands.Bot):
 
     async def get_prefix(self, message: discord.Message):
         if message.guild:
-            return commands.when_mentioned_or('k:')(self, message)
+            return commands.when_mentioned_or(config.prefix)(self, message)
         else:
             return ['']
 

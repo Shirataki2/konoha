@@ -6,11 +6,11 @@ description: 400 - 他のサーバーの人と会話できちゃう機能です
 <command 
   name="gc register"
   :roles="[{name: 'サーバー管理者', color: 'orange'}, {name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!gc register #グローバルチャット', '!gc register']">
+  :usages="['k:gc register #グローバルチャット', 'k:gc register']">
 
 <div>
 
-  `!gc register [チャンネル名]`
+  `k:gc register [チャンネル名]`
 
 引数に指定したチャンネルをグローバルチャットの送受信先に設定します．
 
@@ -23,11 +23,11 @@ description: 400 - 他のサーバーの人と会話できちゃう機能です
 <command 
   name="gc unregister"
   :roles="[{name: 'サーバー管理者', color: 'orange'}, {name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!gc unregister']">
+  :usages="['k:gc unregister']">
 
 <div>
 
-  `!gc unregister`
+  `k:gc unregister`
 
 グローバルチャットの登録を解除し，以降他のサーバーからのメッセージを自身しないように設定します．
 
@@ -38,11 +38,11 @@ description: 400 - 他のサーバーの人と会話できちゃう機能です
 <command 
   name="gc report"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!gc report @User', '!gc report 334017809090740224']">
+  :usages="['k:gc report @User', 'k:gc report 334017809090740224']">
 
 <div>
 
-  `!gc report <ユーザー>`
+  `k:gc report <ユーザー>`
 
 指定したユーザーを報告します．
 

@@ -6,10 +6,10 @@ description: 000 - Botに関する基本的な設定などです
 <command 
   name="ping"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!ping']">
+  :usages="['k:ping']">
 <div>
 
-`!ping`
+`k:ping`
 
 通信遅延を計測します
 
@@ -28,42 +28,13 @@ Discordから情報を得るためのAPIサーバーの遅延です
 </div>
 </command>
 
-
-<command 
-  name="?"
-  :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['@Konoha ?']">
-<div>
-
-`@Konoha ?`
-
-サーバーでBotを呼び出す際のPrefixを確認できます
-
-</div>
-</command>
-
-<command 
-  name="prefix"
-  :roles="[{name: 'サーバー管理者', color: 'orange'},{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!prefix $']">
-<div>
-
-`!prefix <new_prefix>`
-
-サーバーでBotを呼び出す際のPrefixを変更します．
-
-prefixは8文字以下である必要があります．
-
-</div>
-</command>
-
 <command 
   name="invite"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!invite']">
+  :usages="['k:invite']">
 <div>
 
-`!invite`
+`k:invite`
 
 Botを招待するためのURLを表示します．
 
@@ -73,16 +44,16 @@ Botを招待するためのURLを表示します．
 <command 
   name="timer"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!timer 180']">
+  :usages="['k:timer 180', 'k:timer 5時間']">
 <div>
 
-`!timer <seconds>`
+`k:timer <duration>`
 
-指定した秒数待つタイマーをセットします．
+指定した時間待つタイマーをセットします．
 
-秒数経過後にあなた宛てにメンションを送ります．
+指定時間経過後にあなた宛てにメンションを送ります．
 
-secondsは0以上10800以下である必要があります．
+`duration`は`1分`や`2時間`のように指定するか，`180`のように数字のみで秒数を指定することができます．
 
 </div>
 </command>
@@ -91,10 +62,10 @@ secondsは0以上10800以下である必要があります．
   name="guild"
   :aliases="['server']"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['!guild', '!server']">
+  :usages="['k:guild', 'k:server']">
 <div>
 
-`!guild`
+`k:guild`
 
 サーバーの人数やチャンネル数などといった基本的な情報を表示します．
 
@@ -104,10 +75,10 @@ secondsは0以上10800以下である必要があります．
 <command 
   name="user"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!user @Someone', '!user']">
+  :usages="['k:user @Someone', 'k:user']">
 <div>
 
-`!user [user]`
+`k:user [user]`
 
 引数に指定したユーザー(指定しなかった場合は送信したユーザー)に関する情報を表示します．
 
@@ -117,10 +88,10 @@ secondsは0以上10800以下である必要があります．
 <command 
   name="about"
   :roles="[{name: '全員', color: 'blue'}]"
-  :usages="['!about']">
+  :usages="['k:about']">
 <div>
 
-`!about`
+`k:about`
 
 このBotに関する基本的な情報を返します．
 

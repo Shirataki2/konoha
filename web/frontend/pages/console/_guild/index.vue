@@ -368,7 +368,7 @@ class Index extends Vue {
     {
       icon: 'mdi-calendar',
       title: 'リマインダー',
-      subtitle: '!>reminder',
+      subtitle: 'k:reminder',
       description: 'リマインダーの新規作成や変更，削除を行います',
       to: 'reminder',
     },
