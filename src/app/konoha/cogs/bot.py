@@ -80,55 +80,6 @@ class Bot(commands.Cog):
                         value=f"{db_dur:.2f} ms", inline=False)
         await message.edit(embed=embed)
 
-    @commands.command(name="?")
-    @commands.guild_only()
-    async def get_prefix(self, ctx: commands.Context):
-        '''
-        Botの現在のPrefixを返します
-        '''
-        guild = await q.Guild(ctx.guild.id).get(verbose=2)
-        return await ctx.send(f"このサーバーのPrefixは`{guild.prefix}`です！")
-
-    @commands.command(name="prefix")
-    @commands.guild_only()
-    @checks.can_manage_guild()
-    async def prefix(self, ctx: commands.Context, prefix: str):
-        '''
-        Botを呼び出すための接頭文字(Prefix)を変更します
-
-        引数`prefix`は8文字以下で設定してください
-
-        例えば prefix が `$`であればコマンドは`$ping`のようにして呼び出すことができます．
-        '''
-        if len(prefix) > 8:
-            return await self.bot.send_error(
-                ctx,
-                "引数が長過ぎます",
-                "Prefixは8文字以下である必要があります．"
-            )
-        logger.debug(f"\t変更後のPrefix: {prefix}")
-        await q.Guild(ctx.guild.id).set(prefix=prefix)
-        embed = discord.Embed(color=config.theme_color)
-        embed.set_author(name='Prefix変更', icon_url=self.bot.user.avatar_url)
-        embed.description = f"{self.bot.user.mention}のPrefixを`{prefix}`に変更しました"
-        await ctx.send(embed=embed)
-
-    @prefix.error
-    async def on_prefix_error(self, ctx: commands.Context, error):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            ctx.handled = True
-            return await self.bot.send_error(
-                ctx, "引数が不足しています",
-                "接頭文字に相当する文字を引数に入力してください"
-            )
-        if isinstance(error, commands.errors.CheckFailure):
-            ctx.handled = True
-            return await self.bot.send_error(
-                ctx, "実行権限がありません",
-                "接頭文字を変更するにはサーバー管理の権限が必要です"
-            )
-        raise error
-
     @commands.command()
     async def invite(self, ctx: commands.Context):
         '''
@@ -139,22 +90,7 @@ class Bot(commands.Cog):
         return await ctx.send(f"{config.oauth2_url}")
 
     @commands.command()
-    async def timer(self, ctx: commands.Context, seconds: float):
-        '''
-        指定した秒数後にあなた宛てにメンションを送信します
-
-        ただし，3時間以上の秒数を指定することはできません．
-        '''
-        if seconds < 0:
-            return await ctx.send("負の時間待たせるとはどういうことなのでしょう(哲学)")
-        if seconds > 3600 * 3:
-            return await ctx.send("サーバーの逼迫を防ぐために最大秒数は現状3時間までです．\n申し訳ありません．")
-        await ctx.send(f"{seconds:.1f}秒のタイマーを設定しました")
-        await asyncio.sleep(seconds)
-        await ctx.send(f"{ctx.author.mention} {seconds:.1f}秒間経過しました!")
-
-    @commands.command()
-    async def timer2(self, ctx: commands.Context, duration: DurationToSecondsConverter):
+    async def timer(self, ctx: commands.Context, duration: DurationToSecondsConverter):
         '''
         指定した秒数後にあなた宛てにメンションを送信します
         '''
@@ -263,17 +199,10 @@ class Bot(commands.Cog):
         embed.add_field(name='ID', value=f'{appinfo.id}')
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def tmp(self, ctx: commands.Context):
-        embed = discord.Embed(title="Hoge")
-        embed.add_field(name="test", value="test")
-        embed.add_field(name="piyo", value="fuga")
-        embed.add_field(name="foo", value="bar")
-        msg = await ctx.send(embed=embed)
-        indices = [i for i, field in enumerate(
-            embed._fields) if field["name"] == "piyo"]
-        embed.set_field_at(indices[0], name="piyopiyo", value="fugafuga")
-        await msg.edit(embed=embed)
+    @commands.command(hidden=True)
+    async def tmp(self, ctx: commands.Context, first):
+        data = await q.Vocab.get_random(first)
+        print(data)
 
 
 def setup(bot):

@@ -45,7 +45,7 @@ class Reminder(commands.Cog):
         '''
         if ctx.invoked_subcommand is None:
             embed = discord.Embed(color=config.theme_color)
-            p = await self.bot.get_prefix(ctx.message)
+            p = config.prefix
             embed.set_author(name="Reminder コマンド",
                              icon_url=self.bot.user.avatar_url)
             embed.add_field(

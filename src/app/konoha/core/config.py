@@ -7,6 +7,7 @@ logger = get_module_logger(__name__)
 
 class Config:
     bot_token: str = ""
+    prefix: str = ""
     db_user: str = ""
     db_host: str = ""
     db_password: str = ""

@@ -10,3 +10,5 @@ alembic.ini
 src/app/konoha/api/main_.py
 *.otf
 src/app/test.png
+/temp/
+src/app/temp/

@@ -35,7 +35,7 @@ class Konoha(BotBase):
         embed.set_author(name="エラーが発生しました", icon_url=self.user.avatar_url)
         if ctx.guild:
             guild = await q.Guild(ctx.guild.id).get(verbose=2)
-            pf = guild.prefix
+            pf = config.prefix
         else:
             pf = ""
         embed.set_footer(

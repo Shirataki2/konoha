@@ -62,9 +62,12 @@ class Images(commands.Cog):
     @tasks.loop(seconds=300)
     async def postloop(self):
         try:
-            for hook in await q.Hook.get_all(verbose=2):
+            hooks = await q.Hook.get_all(verbose=2)
+            for hook in hooks:
                 posts = []
-                while len(posts) == 0:
+                reconnect = 0
+                while len(posts) == 0 and reconnect < 10:
+                    reconnect += 1
                     p = random.randint(1, 2000)
                     fn = partial(self.client.post_list,
                                  tags=hook.tags, page=p, limit=2)

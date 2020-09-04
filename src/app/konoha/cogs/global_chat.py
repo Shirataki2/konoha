@@ -199,7 +199,9 @@ async def send_global_message(guild, message):
         await hook.send(
             message.content,
             username=message.author.name,
-            avatar_url=message.author.avatar_url_as(format="png")
+            avatar_url=message.author.avatar_url_as(format="png"),
+            allowed_mentions=discord.AllowedMentions(
+                everyone=False, users=False, roles=False)
         )
 
 

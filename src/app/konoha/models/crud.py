@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 from pytz import timezone
 from datetime import datetime, timedelta
 from sqlalchemy.sql import and_, select, func
@@ -414,3 +415,20 @@ class Timer(CRUDBase):
         )
         await self.execute(q, verbose)
         return self
+
+
+class Vocab(CRUDBase):
+    def __init__(self, name):
+        self.name = name
+
+    async def get(self, verbose=1):
+        q = models.noun.select().where(self.name == models.noun.c.name)
+        result = await self.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def get_random(cls, first, verbose=1):
+        q = models.noun.select().where(first == models.noun.c.first)
+        result = await cls.execute(q, verbose)
+        data = await result.fetchall()
+        return random.choice(data)

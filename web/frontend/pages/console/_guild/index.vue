@@ -25,10 +25,10 @@
                   機能一覧
                   <v-icon>mdi-robot</v-icon>
                 </v-tab>
-                <v-tab href="#tab-2">
+                <!-- <v-tab href="#tab-2">
                   設定
                   <v-icon>mdi-cog</v-icon>
-                </v-tab>
+                </v-tab> -->
                 <v-tab href="#tab-3">
                   支援
                   <v-icon>mdi-gift-outline</v-icon>
@@ -162,14 +162,14 @@
                     </v-card-text>
                   </v-card>
                 </v-tab-item> -->
-                <v-tab-item value="tab-2">
+                <!-- <v-tab-item value="tab-2">
                   <Settings
                     ref="form"
                     :user="guild.user"
                     :guild="guild"
                     @dirty="dirty"
                   />
-                </v-tab-item>
+                </v-tab-item> -->
                 <v-tab-item value="tab-3">
                   <v-card flat>
                     <v-card-text>

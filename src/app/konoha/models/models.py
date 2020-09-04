@@ -86,3 +86,11 @@ timer = Table(
     Column("expire_at", DateTime, nullable=False),
     Column("created_at", DateTime, nullable=False),
 )
+
+noun = Table(
+    "noun",
+    meta,
+    Column("first", String(1)),
+    Column("name", String(16)),
+    Column("yomi", String(32)),
+)

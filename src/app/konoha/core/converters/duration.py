@@ -2,7 +2,7 @@ import discord
 import re
 from discord.ext import commands
 
-d = '[0-9０１２３４５６７８９\.．]'
+d = '[0-9０１２３４５６７８９]'
 yers = re.compile(f'({d}+)?(?:年|year|yr|y).*')
 mths = re.compile(f'({d}+)?(?:.月|month).*')
 weks = re.compile(f'({d}+)?(?:週|week|w).*')
@@ -17,44 +17,45 @@ def extract(argument: str):
     argument = argument.replace(' ', '')
     n = [0.0]
     r = ''
+    print(mins.findall(argument))
     try:
-        y = float(n[0]) if (n := yers.findall(argument)) else 0
+        y = int(n[0]) if (n := yers.findall(argument)) else 0
         if y != 0:
             r += f'{y}年'
     except:
         y = 0
     try:
-        m = float(n[0]) if (n := mths.findall(argument)) else 0
+        m = int(n[0]) if (n := mths.findall(argument)) else 0
         if m != 0:
-            r += f'{y}ヶ月'
+            r += f'{m}ヶ月'
     except:
         m = 0
     try:
-        w = float(n[0]) if (n := weks.findall(argument)) else 0
+        w = int(n[0]) if (n := weks.findall(argument)) else 0
         if w != 0:
             r += f'{w}週間'
     except:
         w = 0
     try:
-        d = float(n[0]) if (n := days.findall(argument)) else 0
+        d = int(n[0]) if (n := days.findall(argument)) else 0
         if y != 0:
             r += f'{d}日'
     except:
         d = 0
     try:
-        H = float(n[0]) if (n := hurs.findall(argument)) else 0
+        H = int(n[0]) if (n := hurs.findall(argument)) else 0
         if H != 0:
             r += f'{H}時間'
     except:
         H = 0
     try:
-        M = float(n[0]) if (n := mins.findall(argument)) else 0
+        M = int(n[0]) if (n := mins.findall(argument)) else 0
         if M != 0:
             r += f'{M}分'
     except:
         M = 0
     try:
-        S = float(n[0]) if (n := secs.findall(argument)) else 0
+        S = int(n[0]) if (n := secs.findall(argument)) else 0
         if S != 0:
             r += f'{S}秒'
     except:
