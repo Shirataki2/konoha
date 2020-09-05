@@ -1,6 +1,6 @@
 ---
 title: Global Chat
-description: 400 - 他のサーバーの人と会話できちゃう機能です
+description: 030 - 他のサーバーの人と会話できちゃう機能です
 ---
 
 <command 

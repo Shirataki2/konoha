@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import traceback
 import secrets
+from datetime import datetime, timedelta
 
 from konoha.core import config
 from konoha.extensions.utils.timer import Timer
@@ -20,6 +21,22 @@ class Konoha(BotBase):
         self.timer = Timer()
         self.timer.start(self)
         self.custom_emojis = CustomEmoji(self)
+
+    @property
+    def tomorrow(self):
+        h = datetime.today().hour
+        update_hour = 19
+        update_time = datetime.today().replace(
+            hour=update_hour, minute=0, second=0, microsecond=0
+        )
+        if h < update_hour:
+            return update_time
+        else:
+            return update_time + timedelta(days=1)
+
+    async def on_ready(self):
+        await self.timer.create_event('daily', self.tomorrow, None)
+        await super().on_ready()
 
     async def send_notification(self, ctx: commands.Context, title: str, description: str = None):
         embed = discord.Embed(

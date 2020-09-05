@@ -199,11 +199,6 @@ class Bot(commands.Cog):
         embed.add_field(name='ID', value=f'{appinfo.id}')
         await ctx.send(embed=embed)
 
-    @commands.command(hidden=True)
-    async def tmp(self, ctx: commands.Context, first):
-        data = await q.Vocab.get_random(first)
-        print(data)
-
 
 def setup(bot):
     bot.add_cog(Bot(bot))

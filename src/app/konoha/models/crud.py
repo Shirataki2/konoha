@@ -432,3 +432,37 @@ class Vocab(CRUDBase):
         result = await cls.execute(q, verbose)
         data = await result.fetchall()
         return random.choice(data)
+
+
+class Money(CRUDBase):
+    def __init__(self, guild_id, user_id):
+        self.user_id = str(user_id)
+        self.guild_id = str(guild_id)
+
+    async def get(self, verbose=1):
+        q = models.money.select().where(and_(
+            self.user_id == models.money.c.user,
+            self.guild_id == models.money.c.guild
+        ))
+        result = await self.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def create(cls, user_id, guild_id, verbose=1, **kwargs):
+        q = models.money.insert(None).values(
+            user=user_id, guild=guild_id, **kwargs)
+        await cls.execute(q, verbose)
+        return cls(guild_id, user_id)
+
+    async def set(self, verbose=1, **kwargs):
+        q = models.money.update(None).where(and_(
+            self.user_id == models.money.c.user,
+            self.guild_id == models.money.c.guild
+        )).values(**kwargs)
+        await Reminder.execute(q, verbose)
+        return self
+
+    @staticmethod
+    async def reset(verbose=1):
+        q = models.money.update(None).values(bonus=0)
+        await CRUDBase.execute(q, verbose)

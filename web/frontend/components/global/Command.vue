@@ -85,9 +85,9 @@ pre::before {
 }
 
 code {
-  background: #222 !important;
+  background: #444 !important;
   color: #fff !important;
-  padding: 4px 0 !important;
+  padding: 4px 2px !important;
   margin: 0 4px;
 }
 
@@ -105,5 +105,6 @@ table td {
 
 table tr:nth-child(even) {
   background-color: #333;
+  color: #ccc;
 }
 </style>

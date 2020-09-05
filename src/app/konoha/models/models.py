@@ -94,3 +94,13 @@ noun = Table(
     Column("name", String(16)),
     Column("yomi", String(32)),
 )
+
+money = Table(
+    "money",
+    meta,
+    Column("user", String(24), nullable=False, primary_key=True),
+    Column("guild", String(24), nullable=False),
+    Column("amount", Integer),
+    Column("turnip", Integer),
+    Column("bonus", Integer),
+)
