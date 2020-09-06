@@ -16,7 +16,7 @@ from pathlib import Path
 from time import perf_counter
 
 import konoha
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
@@ -66,7 +66,7 @@ class Bot(commands.Cog):
             ctx.send, embed=embed
         )
         db_dur, g = await get_duration(
-            q.Guild(ctx.guild.id).get
+            q.Guild(self.bot,ctx.guild.id).get
         )
         embed.title = '🏓 Pong!'
         embed.description = f"{self.bot.user.mention}は正常稼働中です"

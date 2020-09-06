@@ -13,7 +13,7 @@ from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 from typing import Optional, Pattern
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
@@ -40,19 +40,19 @@ class Economy(commands.Cog):
         self.bot: Konoha = bot
 
     async def get_money(self, user: discord.Member):
-        money = await q.Money(user.guild.id, user.id).get()
+        money = await q.Money(self.bot,user.guild.id, user.id).get()
         if money:
             return money
         else:
-            money = await q.Money.create(user.id, user.guild.id, amount=1000)
+            money = await q.Money.create(self.bot,user.id, user.guild.id, amount=1000)
             return await money.get()
 
     async def get_money_by_id(self, guild_id, user_id):
-        money = await q.Money(guild_id, user_id).get()
+        money = await q.Money(self.bot,guild_id, user_id).get()
         if money:
             return money
         else:
-            money = await q.Money.create(user_id, guild_id, amount=1000)
+            money = await q.Money.create(self.bot,user_id, guild_id, amount=1000)
             return await money.get()
 
     async def update_money(self, user: discord.Member, diff: int, force=False):
@@ -60,14 +60,14 @@ class Economy(commands.Cog):
         if money.amount + diff < 0 and not force:
             return None
         else:
-            await q.Money(user.guild.id, user.id).set(amount=money.amount + diff)
+            await q.Money(self.bot,user.guild.id, user.id).set(amount=money.amount + diff)
 
     async def update_money_by_id(self, guild_id, user_id, diff: int, force=False):
         money = await self.get_money_by_id(guild_id, user_id)
         if money.amount + diff < 0 and not force:
             return None
         else:
-            await q.Money(guild_id, user_id).set(amount=money.amount + diff)
+            await q.Money(self.bot,guild_id, user_id).set(amount=money.amount + diff)
 
     @commands.command()
     @commands.guild_only()
@@ -104,11 +104,11 @@ class Economy(commands.Cog):
             prefix = '超大当たり！'
         await ctx.send(f'{prefix}{salary}ペリカGET!\n所持金💴 **{money.amount+salary}**ペリカ')
         await self.update_money(ctx.author, salary)
-        await q.Money(ctx.guild.id, ctx.author.id).set(bonus=1)
+        await q.Money(self.bot,ctx.guild.id, ctx.author.id).set(bonus=1)
 
     @commands.Cog.listener()
     async def on_daily_completed(self, payload):
-        await q.Money.reset()
+        await q.Money.reset(self.bot)
         await self.bot.timer.create_event('daily', self.bot.tomorrow, None)
 
 

@@ -28,3 +28,10 @@ COPY ipaexg.ttf /usr/share/fonts/truetype
 RUN echo 'font.family : IPAexGothic' >> /usr/local/lib/python3.8/site-packages/matplotlib/mpl-data/matplotlibrc && \
     rm -rf /root/.config/matplotlib
 
+WORKDIR /workspace/
+RUN apt -y install open-jtalk open-jtalk-mecab-naist-jdic wget unzip
+RUN wget https://sourceforge.net/projects/mmdagent/files/MMDAgent_Example/MMDAgent_Example-1.6/MMDAgent_Example-1.6.zip/download -O MMDAgent_Example-1.6.zip && \
+    unzip MMDAgent_Example-1.6.zip MMDAgent_Example-1.6/Voice/* && \
+    mkdir /usr/share/hts-voice && \
+    cp -r MMDAgent_Example-1.6/Voice/mei/ /usr/share/hts-voice
+WORKDIR /workspace/konoha

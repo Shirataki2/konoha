@@ -10,7 +10,7 @@ from konoha.extensions.utils.timer import Timer
 from konoha.core.bot.base import BotBase
 from konoha.core.bot.emoji import CustomEmoji
 from konoha.core.log.logger import get_module_logger
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 
 logger = get_module_logger(__name__)
 
@@ -51,7 +51,7 @@ class Konoha(BotBase):
         )
         embed.set_author(name="エラーが発生しました", icon_url=self.user.avatar_url)
         if ctx.guild:
-            guild = await q.Guild(ctx.guild.id).get(verbose=2)
+            guild = await q.Guild(self, ctx.guild.id).get(verbose=2)
             pf = config.prefix
         else:
             pf = ""
@@ -130,7 +130,7 @@ class Konoha(BotBase):
             name = error.__class__.__name__
             command = str(ctx.command)
             detail = str(error)
-            await q.Error.create(id, guild, channel, user, message, command, name, detail, tb)
+            await q.Error.create(self, id, guild, channel, user, message, command, name, detail, tb)
             return await self.send_error(
                 ctx, "不明なエラーが発生しました",
                 (

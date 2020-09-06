@@ -17,7 +17,7 @@ from datetime import datetime
 from time import perf_counter
 
 import konoha
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core.utils.pagination import EmbedPaginator
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
@@ -95,6 +95,7 @@ class Reaction(commands.Cog):
         for emoji in emojis[:len(options)]:
             await msg.add_reaction(emoji)
         await q.Vote.create(
+            self.bot,
             id,
             guild=ctx.guild.id,
             channel=ctx.channel.id,
@@ -112,7 +113,7 @@ class Reaction(commands.Cog):
         paginator = EmbedPaginator(title="投票一覧", color=config.theme_color,
                                    icon=str(self.bot.user.avatar_url), footer="Page $p / $P")
         paginator.new_page()
-        votes = await q.Vote.search(guild=ctx.guild.id)
+        votes = await q.Vote.search(self.bot,guild=ctx.guild.id)
         if not votes:
             return await ctx.send("投票はまだ作成していません")
         for vote in votes:
@@ -127,7 +128,7 @@ class Reaction(commands.Cog):
         '''
         投票の集計結果を表示します
         '''
-        vote = await q.Vote(id).get()
+        vote = await q.Vote(self.bot,id).get()
         if vote is None:
             return await ctx.send("該当の投票は存在しません")
         with ctx.typing():

@@ -7,7 +7,7 @@ import secrets
 import os
 from typing import Dict, List
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.commands import checks
 from konoha.core.bot.konoha import Konoha

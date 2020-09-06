@@ -14,7 +14,7 @@ from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 from typing import Optional, Pattern
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.cogs.economy import Economy
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha

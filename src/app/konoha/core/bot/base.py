@@ -4,11 +4,12 @@ from discord.ext import commands
 import asyncio
 import os
 import glob
+from aiomysql.sa import create_engine
 from aiohttp import ClientSession
 from typing import List
 
 import konoha
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.commands.help import CustomHelpCommand
 from konoha.core.log.logger import get_module_logger
@@ -29,6 +30,30 @@ class BotBase(commands.Bot):
             self._sess = ClientSession(loop=self.loop)
         return self._sess
 
+    @property
+    async def pool(self):
+        if not hasattr(self, '_pool'):
+            self._pool = await create_engine(
+                user=config.db_user,
+                db=config.db_name,
+                host=config.db_host,
+                password=config.db_password,
+                charset='utf8',
+                autocommit=True,
+                loop=self.loop
+            )
+        return self._pool
+
+    async def execute(self, query, verbose=1, *args, **kwargs):
+        logger.debug("DB接続開始")
+        s = str(query)
+        for l in s.split("\n"):
+            logger.debug(f"\t{l}")
+        async with (await self.pool).acquire() as conn:
+            result = await conn.execute(query)
+        logger.debug("DB接続終了")
+        return result
+
     async def on_ready(self):
         logger.info("Ready.")
         logger.info("Bot Name : %s", self.user)
@@ -44,15 +69,15 @@ class BotBase(commands.Bot):
             return ['']
 
     async def set_prefix(self, message: discord.Message, prefix: str):
-        await q.Guild(guild_id=message.guild.id).set(prefix=prefix)
+        await q.Guild(self, guild_id=message.guild.id).set(prefix=prefix)
 
     async def on_guild_join(self, guild: discord.Guild):
         logger.info(f"ギルド加入: {guild.name}({guild.id})")
-        await q.Guild.create(guild.id)
+        await q.Guild.create(self, guild.id)
 
     async def on_guild_remove(self, guild: discord.Guild):
         logger.info(f"ギルド退出: {guild.name}({guild.id})")
-        await q.Guild(guild_id=guild.id).delete()
+        await q.Guild(self, guild_id=guild.id).delete()
 
     def get_all_cogs(self, reload=False):
         dirname = os.path.dirname(os.path.abspath(__file__))

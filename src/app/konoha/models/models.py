@@ -1,3 +1,4 @@
+import sqlalchemy as sa
 from sqlalchemy import MetaData, Table, Column, Integer, String, DateTime, Boolean, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -10,6 +11,7 @@ guild = Table(
     Column("prefix", String(255), server_default=">", nullable=False),
     Column("gc_channel", String(255), nullable=True),
     Column("gc_url", String(255), nullable=True),
+    Column("expand", Boolean, server_default=sa.sql.false(), nullable=True),
 )
 
 hook = Table(

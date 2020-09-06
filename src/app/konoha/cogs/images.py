@@ -7,7 +7,7 @@ import random
 from functools import partial
 from pybooru import Danbooru
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.log.logger import get_module_logger
@@ -34,24 +34,24 @@ class Images(commands.Cog):
     @commands.command(hidden=True)
     async def autobooru(self, ctx: commands.Context, *, tags):
         channel_id = ctx.channel.id
-        if hook := await q.Hook(ctx.guild.id, channel_id).get():
+        if hook := await q.Hook(self.bot, ctx.guild.id, channel_id).get():
             async with aiohttp.ClientSession() as session:
-                await q.Hook(ctx.guild.id, channel_id).set(hookurl=hook.hookurl, tags=tags)
+                await q.Hook(self.bot, ctx.guild.id, channel_id).set(hookurl=hook.hookurl, tags=tags)
                 await ctx.send(f"Tagを{hook.tags}から{tags}に変更しました")
                 webhook = discord.Webhook.from_url(
                     hook.hookurl, adapter=discord.AsyncWebhookAdapter(session))
                 return await webhook.send(f"Webhookの変更が完了しました")
         else:
             webhook_: discord.Webhook = await ctx.channel.create_webhook(name="Autobooru")
-            await q.Hook.create(ctx.guild.id, channel_id, webhook_.url, tags)
+            await q.Hook.create(self.bot, ctx.guild.id, channel_id, webhook_.url, tags)
             await ctx.send(f"新規Danbooru Webhookを登録しました\nTag: {tags}")
             return await webhook_.send(f"Webhookの登録が完了しました")
 
     @commands.command(hidden=True)
     async def stopbooru(self, ctx: commands.Context):
         async with aiohttp.ClientSession() as session:
-            if hook := await q.Hook(ctx.guild.id, ctx.channel.id).get():
-                await q.Hook(ctx.guild.id, ctx.channel.id).delete()
+            if hook := await q.Hook(self.bot, ctx.guild.id, ctx.channel.id).get():
+                await q.Hook(self.bot, ctx.guild.id, ctx.channel.id).delete()
                 webhook = discord.Webhook.from_url(
                     hook.hookurl, adapter=discord.AsyncWebhookAdapter(session))
                 await webhook.send(f"Webhookの登録を解除しました")
@@ -62,7 +62,7 @@ class Images(commands.Cog):
     @tasks.loop(seconds=300)
     async def postloop(self):
         try:
-            hooks = await q.Hook.get_all(verbose=2)
+            hooks = await q.Hook.get_all(self.bot, verbose=2)
             for hook in hooks:
                 posts = []
                 reconnect = 0

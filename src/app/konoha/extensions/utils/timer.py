@@ -6,7 +6,7 @@ import secrets
 import json
 import aiomysql
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core.abc import Singleton
 
 
@@ -21,7 +21,7 @@ class Timer(Singleton):
         self._task = self.bot.loop.create_task(self.dispatch_events())
 
     async def wait_for_next_event(self, cap_day=40):
-        event = await q.Timer.get_next(cap_day)
+        event = await q.Timer.get_next(self.bot, cap_day)
         if event is not None:
             self._have_event.set()
             return event
@@ -29,7 +29,7 @@ class Timer(Singleton):
             self._have_event.clear()
             self._next_event = None
             await self._have_event.wait()
-            return await q.Timer.get_next(cap_day)
+            return await q.Timer.get_next(self.bot, cap_day)
 
     async def dispatch_events(self):
         try:
@@ -39,7 +39,7 @@ class Timer(Singleton):
                 sec = (event.expire_at - now).total_seconds()
                 if sec > 0:
                     await asyncio.sleep(sec)
-                await q.Timer(event.id).delete()
+                await q.Timer(self.bot, event.id).delete()
                 event_name = f'{event.event}_completed'
                 self.bot.dispatch(event_name, json.loads(event.payload))
         except asyncio.CancelledError:
@@ -61,7 +61,7 @@ class Timer(Singleton):
             )
             return
         id = secrets.token_hex(16)[:16]
-        await q.Timer.create(id, event, expire_at, json.dumps(payload))
+        await q.Timer.create(self.bot, id, event, expire_at, json.dumps(payload))
         if dur <= (86400 * 40):
             self._have_event.set()
         if self._next_event and expire_at < self._next_event.expire_at:

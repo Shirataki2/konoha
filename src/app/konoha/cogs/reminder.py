@@ -7,7 +7,7 @@ from pytz import timezone
 from datetime import datetime
 from pybooru import Danbooru
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core.utils.pagination import EmbedPaginator
 from konoha.core.commands import checks
 from konoha.core import config
@@ -30,7 +30,6 @@ class Reminder(commands.Cog):
             {"color": 0xf7c417, "before": 60, "message": "あと1時間で以下のイベントが開始します"},
             {"color": 0xff1717, "before": 0, "message": "以下のイベントが開催されます"},
         ]
-        # pylint: disable=no-member
         self.notification_task.start()
 
     def cog_unload(self):
@@ -68,7 +67,7 @@ class Reminder(commands.Cog):
         '''
         guild: discord.Guild = ctx.guild
         channel: discord.TextChannel = ctx.channel
-        if (await q.Reminder(guild.id).update_config(channel.id)) == "create":
+        if (await q.Reminder(self.bot, guild.id).update_config(channel.id)) == "create":
             logger.debug(f"[{ctx.guild.id}] リマインダーリスト登録")
             await ctx.send(f"リマインダーの投稿先を{channel.mention}に設定しました")
         else:
@@ -96,7 +95,7 @@ class Reminder(commands.Cog):
                 return False
             return message.author == ctx.author
         p = await self.bot.get_prefix(ctx.message)
-        if (c := await q.Reminder(ctx.guild.id).get_config()) is None:
+        if (c := await q.Reminder(self.bot, ctx.guild.id).get_config()) is None:
             return await ctx.send((f"リマインダーを作成する前にリマインダーの初期化を行ってください\n"
                                    f"リマインダーを投稿したいチャンネルで`{p}reminder init`を実行してください．"))
         messages = [ctx.message]
@@ -140,7 +139,7 @@ class Reminder(commands.Cog):
                 return
             [y, m, d, H, M] = [int(e) for e in message2.content.split('-')]
             try:
-                await q.Reminder(ctx.guild.id).create(
+                await q.Reminder(self.bot, ctx.guild.id).create(
                     user=ctx.author.id,
                     content=message1.content,
                     start_at=datetime(year=y, month=m, day=d, hour=H, minute=M)
@@ -175,10 +174,10 @@ class Reminder(commands.Cog):
         開催予定のリマインダーの一覧を表示します
         '''
         p = await self.bot.get_prefix(ctx.message)
-        if await q.Reminder(ctx.guild.id).get_config() is None:
+        if await q.Reminder(self.bot, ctx.guild.id).get_config() is None:
             return await ctx.send((f"リマインダーを表示する前にリマインダーの初期化を行ってください\n"
                                    f"リマインダーを投稿したいチャンネルで`{p}reminder init`を実行してください．"))
-        reminders, _ = await q.Reminder(ctx.guild.id).list()
+        reminders, _ = await q.Reminder(self.bot, ctx.guild.id).list()
         paginator = EmbedPaginator(title="開催予定のイベント", footer="Page $p / $P")
         if len(reminders) == 0:
             return await ctx.send("開催予定のリマインダーはありません")
@@ -202,12 +201,12 @@ class Reminder(commands.Cog):
         指定したIDのイベントを削除します
         '''
         p = await self.bot.get_prefix(ctx.message)
-        if await q.Reminder(ctx.guild.id).get_config() is None:
+        if await q.Reminder(self.bot, ctx.guild.id).get_config() is None:
             return await ctx.send((f"リマインダーを削除する前にリマインダーの初期化を行ってください\n"
                                    f"リマインダーを投稿したいチャンネルで`{p}reminder init`を実行してください．"))
-        reminder = await q.Reminder(ctx.guild.id).get(id)
+        reminder = await q.Reminder(self.bot, ctx.guild.id).get(id)
         if reminder:
-            await q.Reminder(ctx.guild.id).delete(id)
+            await q.Reminder(self.bot, ctx.guild.id).delete(id)
             embed = discord.Embed(
                 title=reminder.content,
                 description=(
@@ -229,9 +228,9 @@ class Reminder(commands.Cog):
     async def notification_task(self):
         try:
             for notification in self.notifications:
-                reminders = await q.Reminder.search_between_minutes(notification["before"], verbose=0)
+                reminders = await q.Reminder.search_between_minutes(self.bot, notification["before"], verbose=0)
                 for reminder in reminders:
-                    c = await q.Reminder.get_config_from_id(reminder.config, verbose=2)
+                    c = await q.Reminder.get_config_from_id(self.bot, reminder.config, verbose=2)
                     guild: discord.Guild = await self.bot.fetch_guild(c.guild)
                     channel: discord.TextChannel = await self.bot.fetch_channel(c.channel)
                     embed = discord.Embed(

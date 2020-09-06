@@ -8,7 +8,7 @@ from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 from typing import Optional
 
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
@@ -50,12 +50,12 @@ class GlobalChat(commands.Cog):
         '''
         if channel is None:
             channel = ctx.channel
-        guild = await q.Guild(ctx.guild.id).get()
+        guild = await q.Guild(self.bot,ctx.guild.id).get()
         if guild.gc_channel is None:
             hook = await channel.create_webhook(
                 name="Global Chat"
             )
-            await q.Guild(ctx.guild.id).set(gc_url=hook.url, gc_channel=channel.id)
+            await q.Guild(self.bot,ctx.guild.id).set(gc_url=hook.url, gc_channel=channel.id)
             await ctx.send(f"グローバルチャットの投稿先を{channel.mention}に設定しました")
         else:
             async with aiohttp.ClientSession() as session:
@@ -64,7 +64,7 @@ class GlobalChat(commands.Cog):
                 newhook = await channel.create_webhook(
                     name="Global Chat"
                 )
-                await q.Guild(ctx.guild.id).set(gc_channel=channel.id, gc_url=newhook.url)
+                await q.Guild(self.bot,ctx.guild.id).set(gc_channel=channel.id, gc_url=newhook.url)
                 await ctx.send(f"グローバルチャットの投稿先{channel.mention}に変更しました")
                 await hook.delete()
 
@@ -75,14 +75,14 @@ class GlobalChat(commands.Cog):
         '''
         グローバルチャットの登録を解除します
         '''
-        guild = await q.Guild(ctx.guild.id).get()
+        guild = await q.Guild(self.bot,ctx.guild.id).get()
         if guild.gc_channel is None:
             await ctx.send(f"グローバルチャットサービスはまだ利用していません")
         else:
             async with aiohttp.ClientSession() as session:
                 hook = discord.Webhook.from_url(
                     guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
-                await q.Guild(ctx.guild.id).set(gc_channel=None, gc_url=None)
+                await q.Guild(self.bot,ctx.guild.id).set(gc_channel=None, gc_url=None)
                 await ctx.send(f"グローバルチャットサービスの利用を終了しました")
                 await hook.delete()
 
@@ -168,12 +168,12 @@ class GlobalChat(commands.Cog):
         if message.author.bot or message.guild is None:
             return
         await asyncio.sleep(0.2)
-        guild = await q.Guild(message.guild.id).get(verbose=2)
+        guild = await q.Guild(self.bot,message.guild.id).get(verbose=2)
         if int(guild.gc_channel) != message.channel.id:
             return
         guilds = [
             g
-            for g in await q.Guild.get_all(verbose=2)
+            for g in await q.Guild.get_all(self.bot,verbose=2)
             if (int(g.id) != message.guild.id) and (g.gc_channel is not None)
         ]
         await asyncio.gather(*[

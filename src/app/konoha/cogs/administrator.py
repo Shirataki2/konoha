@@ -18,7 +18,7 @@ from datetime import datetime
 from time import perf_counter
 
 import konoha
-import konoha.models.crud as q
+import konoha.models.crud2 as q
 from konoha.core.utils.pagination import EmbedPaginator
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
@@ -94,10 +94,10 @@ class Administrator(commands.Cog):
         '''
         if user is None:
             return await ctx.send(f"Userが見つかりません")
-        if await q.User(user.id).get():
-            await q.User(user.id).set(**{role: True})
+        if await q.User(self.bot, user.id).get():
+            await q.User(self.bot, user.id).set(**{role: True})
         else:
-            await q.User.create(user.id, **{role: True})
+            await q.User.create(self.bot, user.id, **{role: True})
         await ctx.message.add_reaction('✅')
 
     @commands.is_owner()
@@ -106,15 +106,14 @@ class Administrator(commands.Cog):
         '''
         生のSQLを実行します
         '''
-        async with q.DB() as db:
-            result = await db.execute(query)
-            try:
-                data = await result.fetchall()
-                table = tabulate.tabulate(
-                    [r.as_tuple() for r in data], headers=data[0].keys(), tablefmt="fancy_grid")
-                return await ctx.send(f"```\n{table}\n```")
-            except aiomysql.sa.ResourceClosedError:
-                return await ctx.send(f"正常に実行されました")
+        result = await self.bot.execute(query)
+        try:
+            data = await result.fetchall()
+            table = tabulate.tabulate(
+                [r.as_tuple() for r in data], headers=data[0].keys(), tablefmt="fancy_grid")
+            return await ctx.send(f"```\n{table}\n```")
+        except aiomysql.sa.ResourceClosedError:
+            return await ctx.send(f"正常に実行されました")
 
     @commands.is_owner()
     @commands.command(aliases=["e"])
@@ -122,7 +121,7 @@ class Administrator(commands.Cog):
         '''
         エラーログを取得します
         '''
-        error = await q.Error(id).get()
+        error = await q.Error(self.bot, id).get()
         if error:
             embed = discord.Embed(title=error.name, color=0xff0000)
             embed.set_author(
