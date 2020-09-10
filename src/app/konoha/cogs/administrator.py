@@ -61,6 +61,7 @@ class Administrator(commands.Cog):
         '''
         データベースのマイグレーションを行います
         '''
+        msg = await ctx.send(f'マイグレーションの実行中です {self.bot.custom_emojis.loading}')
         alembic_path = Path(os.path.abspath(konoha.__file__)).parent / "models"
         proc = subprocess.run(
             (
@@ -82,9 +83,9 @@ class Administrator(commands.Cog):
             logger.info(l)
         for l in proc.stderr.split("\n"):
             logger.warn(l)
-        await ctx.send('マイグレーションが終了しました')
+        await msg.edit(content='マイグレーションが終了しました')
         if description:
-            await ctx.send(description)
+            await ctx.send(content=description)
 
     @commands.is_owner()
     @commands.command()

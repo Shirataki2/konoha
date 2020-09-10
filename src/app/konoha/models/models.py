@@ -75,6 +75,7 @@ vote = Table(
     Column("message", String(24), nullable=False),
     Column("user", String(24), nullable=False),
     Column("description", String(3000), nullable=False),
+    Column("opov", Boolean, server_default=sa.sql.false()),
 )
 
 

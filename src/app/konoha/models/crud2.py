@@ -325,6 +325,13 @@ class Vote:
         await self.bot.execute(q, verbose)
         return self
 
+    async def delete(self, verbose=1):
+        q = models.vote.delete(None).where(
+            models.vote.c.id == self.id
+        )
+        await self.bot.execute(q, verbose)
+        return self
+
     @staticmethod
     async def search(bot, verbose=1, **kwargs):
         q = models.vote.select().where(

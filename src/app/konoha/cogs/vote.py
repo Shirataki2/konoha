@@ -5,6 +5,7 @@ import re
 import os
 import subprocess
 import tabulate
+import asyncio
 import aiomysql
 import secrets
 import io
@@ -35,9 +36,9 @@ emojis = [
 ]
 
 
-class Reaction(commands.Cog):
+class Vote(commands.Cog):
     """
-    リアクション機能を用いた便利機能です
+    リアクション機能を用いた投票機能です
     """
     order = 2
 
@@ -50,7 +51,7 @@ class Reaction(commands.Cog):
         '''
         リアクションを使用した投票を作成します．
 
-        選択肢の数は最大26個まで増やすことが可能です．
+        選択肢の数は最大20個まで増やすことが可能です．
 
         __**使用方法**__
 
@@ -62,15 +63,10 @@ class Reaction(commands.Cog):
                 ctx, "引数の数が多すぎます",
                 "選択肢は20個以内である必要があります"
             )
-        if len(options) < 1:
-            return await self.bot.send_error(
-                ctx, "引数の数が少なぎます",
-                "選択肢は1個以上である必要があります"
-            )
-        if any([len(opt) > 15 for opt in options]):
+        if any([len(opt) > 50 for opt in options]):
             return await self.bot.send_error(
                 ctx, "選択肢の文字数が長すぎます",
-                "選択肢は15文字未満である必要があります"
+                "選択肢は50文字未満である必要があります"
             )
         if len(description) > 50:
             return await self.bot.send_error(
@@ -82,6 +78,8 @@ class Reaction(commands.Cog):
                          icon_url=self.bot.user.avatar_url)
         embed.description = f"**{description}**\n\n"
         ln_len = 0
+        if not options:
+            options = ('はい', 'いいえ')
         for emoji, option in zip(emojis, options):
             c = f"{emoji} {option}　"
             ln_len += len(c)
@@ -104,6 +102,75 @@ class Reaction(commands.Cog):
             description=description,
         )
 
+    @commands.command(aliases=["poll1", "vc1", "pc1"])
+    @commands.guild_only()
+    @checks.bot_can_manage_messages()
+    async def vote1(self, ctx: commands.Context, description, *options):
+        '''
+        リアクションを使用した1人1表の投票を作成します．
+
+        選択肢の数は最大20個まで増やすことが可能です．
+
+        __**使用方法**__
+
+        {prefix}vote 集合何時にする？ 12時 2時 5時
+        '''
+        id = secrets.token_hex(16)[:6]
+        if len(options) > 20:
+            return await self.bot.send_error(
+                ctx, "引数の数が多すぎます",
+                "選択肢は20個以内である必要があります"
+            )
+        if any([len(opt) > 50 for opt in options]):
+            return await self.bot.send_error(
+                ctx, "選択肢の文字数が長すぎます",
+                "選択肢は50文字未満である必要があります"
+            )
+        if len(description) > 50:
+            return await self.bot.send_error(
+                ctx, "題名の文字数が長すぎます",
+                "題名は50文字未満である必要があります"
+            )
+        embed = discord.Embed(title="投票", color=config.theme_color)
+        embed.set_author(name=f"投票ID: {id} (1人1票)",
+                         icon_url=self.bot.user.avatar_url)
+        embed.description = f"**{description}**\n\n"
+        ln_len = 0
+        if not options:
+            options = ('はい', 'いいえ')
+        for emoji, option in zip(emojis, options):
+            c = f"{emoji} {option}　"
+            ln_len += len(c)
+            embed.description += c
+            if ln_len > 30:
+                embed.description += "\n\n"
+                ln_len = 0
+        embed.description = embed.description.rstrip("\n")
+        embed.set_footer(text=f"vote_listコマンドで投票の一覧を確認できます")
+        msg: discord.Message = await ctx.send(embed=embed)
+        for emoji in emojis[:len(options)]:
+            await msg.add_reaction(emoji)
+        await q.Vote.create(
+            self.bot,
+            id,
+            guild=ctx.guild.id,
+            channel=ctx.channel.id,
+            message=msg.id,
+            user=ctx.author.id,
+            description=description,
+            opov=True
+        )
+
+    @vote.error
+    @vote1.error
+    async def on_vc_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, '引数が不足しています！',
+                '投票を作成する場合は投票に関する説明を引数に取る必要があります'
+            )
+
     @commands.command(name="vote_list", aliases=["poll_list", "vl", "pl"])
     @commands.guild_only()
     async def vote_list(self, ctx: commands.Context):
@@ -122,17 +189,34 @@ class Reaction(commands.Cog):
                 k=f"{vote.description}", v=f"ID: `{vote.id}` by <@{vote.user}> | [[メッセージへジャンプ！]]({url})")
         await paginator.paginate(ctx)
 
+    @commands.command(name="vote_delete", aliases=["poll_delete", "vd", "pd"])
+    @commands.guild_only()
+    @checks.can_manage_messages()
+    async def vote_delete(self, ctx: commands.Context, id):
+        '''
+        作成した投票を削除します
+        '''
+        vote = await q.Vote(self.bot, id).get()
+        if not vote:
+            return await ctx.send('指定したIDの投票はありません')
+        await q.Vote(self.bot, id).delete()
+        await ctx.message.add_reaction('✅')
+
     @commands.command(name="vote_analyze", aliases=["poll_analyze", "va", "pa"])
     @commands.cooldown(5, 120, commands.BucketType.guild)
     async def vote_analyze(self, ctx: commands.Context, id: str):
         '''
         投票の集計結果を表示します
         '''
+        msg1 = await ctx.send(f'集計中 {self.bot.custom_emojis.loading}')
         vote = await q.Vote(self.bot, id).get()
         if vote is None:
             return await ctx.send("該当の投票は存在しません")
         with ctx.typing():
-            msg: discord.Message = await ctx.fetch_message(vote.message)
+            try:
+                msg: discord.Message = await ctx.fetch_message(vote.message)
+            except discord.NotFound:
+                return await self.bot.send_error(ctx, 'メッセージが見つかりません', '該当のメッセージは削除されているようです')
             args = [
                 arg[2:]
                 for arg in
@@ -141,14 +225,28 @@ class Reaction(commands.Cog):
                     .description
                     .split("\n\n")[1:]
                 ).split("　")
+                if arg != ''
             ]
-            points = {i: [k, 0, []] for i, k in enumerate(args)}
+            if not args:
+                args = ['はい', 'いいえ']
+            points = {i: [k, 0, "", None] for i, k in enumerate(args)}
             for reaction in msg.reactions:
                 try:
                     idx = emojis.index(reaction.emoji)
                 except ValueError:
                     continue
+                points[idx][3] = reaction.emoji
                 points[idx][1] = reaction.count - 1
+                us = [u for u in await reaction.users().flatten() if u.id != self.bot.user.id]
+                t = 5
+                if len(us) == 0:
+                    points[idx][2] = '-'
+                elif len(us) > t:
+                    points[idx][2] = ' '.join(
+                        [f'{u.mention}' for u in us[:t]]) + f' ほか{len(us) - t}名'
+                else:
+                    points[idx][2] = ' '.join(
+                        [f'{u.mention}' for u in us])
             if sum([point[1] for point in points.values()]) == 0:
                 return await ctx.send("まだ誰も投票していないようです")
 
@@ -167,11 +265,15 @@ class Reaction(commands.Cog):
                 return discord.File(f, filename="chart.png")
             file = await self.bot.loop.run_in_executor(None, create_image, vote, points)
             url = f"https://discord.com/channels/{vote.guild}/{vote.channel}/{vote.message}"
-            embed = discord.Embed(title="投票集計")
+            embed = discord.Embed(title="投票集計", color=config.theme_color)
             embed.description = f"[{vote.description}]({url}) by <@{vote.user}>"
-            embed.set_author(name=f"投票ID: {id}", color=config.theme_color,
+            for idx, point in points.items():
+                if point[3]:
+                    embed.add_field(
+                        name=f"{point[3]}: {point[0]} ({point[1]})", value=point[2], inline=False)
+            embed.set_author(name=f"投票ID: {id}",
                              icon_url=self.bot.user.avatar_url)
-            await ctx.send(embed=embed)
+            await msg1.edit(content='', embed=embed)
             await ctx.send(file=file)
 
     @vote_analyze.error
@@ -180,6 +282,27 @@ class Reaction(commands.Cog):
             ctx.handled = True
             await self.bot.send_cooldown_error(ctx, error, 3, 1)
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.guild_id is None or not payload.emoji.name in emojis:
+            return
+        votes = await q.Vote.search(self.bot, message=payload.message_id)
+        if len(votes) > 0:
+            vote = votes[0]
+            if not vote.opov:
+                return
+            guild: discord.Guild = self.bot.get_guild(payload.guild_id)
+            channel: discord.TextChannel = guild.get_channel(
+                payload.channel_id)
+            member: discord.Member = guild.get_member(payload.user_id)
+            message: discord.Message = await channel.fetch_message(payload.message_id)
+            tasks = []
+            for reaction in message.reactions:
+                if reaction.emoji != payload.emoji.name:
+                    tasks.append(message.remove_reaction(
+                        reaction.emoji, member))
+            await asyncio.gather(*tasks)
+
 
 def setup(bot):
-    bot.add_cog(Reaction(bot))
+    bot.add_cog(Vote(bot))

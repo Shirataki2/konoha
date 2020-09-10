@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import asyncio
 import os
+import re
 import glob
 from aiomysql.sa import create_engine
 from aiohttp import ClientSession
@@ -64,7 +65,13 @@ class BotBase(commands.Bot):
 
     async def get_prefix(self, message: discord.Message):
         if message.guild:
-            return commands.when_mentioned_or(config.prefix)(self, message)
+            m: discord.Member = message.guild.get_member(self.user.id)
+            nick = re.findall(r'\[(.+?)?\]', m.nick)
+            if nick:
+                nick = nick[0].replace(', ', ',').split(',')
+                return commands.when_mentioned_or(*nick)(self, message)
+            else:
+                return commands.when_mentioned_or(config.prefix)(self, message)
         else:
             return ['']
 

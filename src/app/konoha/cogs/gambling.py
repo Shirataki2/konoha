@@ -91,11 +91,11 @@ class Gambling(commands.Cog):
 
         最大10人まで参加可能です．
 
-        ルールは親流れが「一の目,目無し,ヒフミ」を出した際のみで，親は3回連続まで行うことが可能です．(逆に言えばこれらの役が出るまで親を続けないといけません)
+        ルールは親流れが親が「一の目,目無し,ヒフミ」を出した際のみで，親は3回連続まで行うことが可能です．(逆に言えばこれらの役が出るまで最大3回親を続けないといけません)
 
         また，ピンゾロは5倍，他のゾロ目は3倍です．
 
-        掛け金は100~1000までとなっています．
+        賭け金は100~1000までとなっています．
         '''
         embed = discord.Embed(
             color=config.theme_color,
@@ -137,7 +137,7 @@ class Gambling(commands.Cog):
         await asyncio.sleep(1)
         await ctx.send('一巡したらゲーム終了だ...')
         await asyncio.sleep(1)
-        await ctx.send('参加者は5秒以内に応答してくれ...')
+        await ctx.send('参加者は15秒以内に応答してくれ...')
         await asyncio.sleep(1)
         await ctx.send('応答がないヤツや数字じゃない返信をしたヤツは500ペリカを賭け金として払うものとする...!!!')
         await asyncio.sleep(1)
@@ -156,8 +156,8 @@ class Gambling(commands.Cog):
                     embed.description += f'\n\n{user.mention}: {money.amount}ペリカ'
                 bit = {u.id: 0 for u in children}
                 await ctx.send('子の奴らは賭け金を入力しろ......!!!\n\n最低100ペリカから最高1000ペリカだ...\n\n儲けたい奴は自己責任で借金してもいいぞ......!!', embed=embed)
-                msg = await ctx.send('制限時間は5秒だ...\n賭けたい金額を数字だけのメッセージで送信してくれ...!')
-                await asyncio.sleep(5)
+                msg = await ctx.send('制限時間は15秒だ...\n賭けたい金額を数字だけのメッセージで送信してくれ...!')
+                await asyncio.sleep(15)
                 msgs = await ctx.channel.history(after=msg).flatten()
                 await ctx.send('賭け金を確認する......')
                 await asyncio.sleep(1)
