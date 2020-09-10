@@ -66,7 +66,10 @@ class BotBase(commands.Bot):
     async def get_prefix(self, message: discord.Message):
         if message.guild:
             m: discord.Member = message.guild.get_member(self.user.id)
-            nick = re.findall(r'\[(.+?)?\]', m.nick)
+            if m.nick:
+                nick = re.findall(r'\[(.+?)?\]', m.nick)
+            else:
+                nick = []
             if nick:
                 nick = nick[0].replace(', ', ',').split(',')
                 return commands.when_mentioned_or(*nick)(self, message)
