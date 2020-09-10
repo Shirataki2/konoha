@@ -60,7 +60,7 @@ class BotBase(commands.Bot):
         logger.info("Bot  ID  : %s", self.user.id)
         logger.info("Version  : %s", konoha.__version__)
         await self.change_presence(status=discord.Status.online)
-        await self.change_presence(activity=discord.Game(name=f"{config.prefix}help"))
+        await self.change_presence(activity=discord.Game(name=f"{config.prefix}help | v{konoha.__version__}"))
 
     async def get_prefix(self, message: discord.Message):
         if message.guild:
