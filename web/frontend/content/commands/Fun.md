@@ -1,7 +1,30 @@
 ---
 title: Fun
-description: 010 - ユーモラスなコマンド群です
+description: 001 - ユーモラスなコマンド群です
 ---
+
+<command 
+  name="suddendeath"
+  :aliases="['sd']"
+  :roles="[{name: '全員', color: 'blue'}]"
+  :usages="['k:suddendeath', 'k:sd 突然の腹痛']">
+<div>
+
+  `k:suddendeath [text]`
+
+<pre>
+＿人人人人人人＿
+＞　突然の死　＜
+￣Y^Y^Y^Y^Y^Y￣
+</pre>
+
+
+のようなテキストを作成します．`text`に文字を入れるとその文字を装飾します．
+
+一行あたり25文字以内にしてください．
+
+</div>
+</command>
 
 <command 
   name="shellgei"

@@ -40,6 +40,7 @@ class GlobalChat(commands.Cog):
     @gc.command()
     @commands.guild_only()
     @checks.can_manage_guild()
+    @checks.bot_has_perms(manage_webhooks=True)
     async def register(self, ctx: commands.Context, channel: Optional[discord.TextChannel] = None):
         '''
         指定したチャンネル(何も指定しない場合はコマンドを投稿したチャンネル)をグローバルチャット用チャンネルとして登録します
@@ -50,51 +51,42 @@ class GlobalChat(commands.Cog):
         '''
         if channel is None:
             channel = ctx.channel
-        guild = await q.Guild(self.bot,ctx.guild.id).get()
+        guild = await q.Guild(self.bot, ctx.guild.id).get()
         if guild.gc_channel is None:
             hook = await channel.create_webhook(
                 name="Global Chat"
             )
-            await q.Guild(self.bot,ctx.guild.id).set(gc_url=hook.url, gc_channel=channel.id)
+            await q.Guild(self.bot, ctx.guild.id).set(gc_url=hook.url, gc_channel=channel.id)
             await ctx.send(f"グローバルチャットの投稿先を{channel.mention}に設定しました")
         else:
             async with aiohttp.ClientSession() as session:
                 hook = discord.Webhook.from_url(
-                    guild.gc_channel, adapter=discord.AsyncWebhookAdapter(session))
+                    guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
                 newhook = await channel.create_webhook(
                     name="Global Chat"
                 )
-                await q.Guild(self.bot,ctx.guild.id).set(gc_channel=channel.id, gc_url=newhook.url)
+                await q.Guild(self.bot, ctx.guild.id).set(gc_channel=channel.id, gc_url=newhook.url)
                 await ctx.send(f"グローバルチャットの投稿先{channel.mention}に変更しました")
                 await hook.delete()
 
     @gc.command()
     @commands.guild_only()
     @checks.can_manage_guild()
+    @checks.bot_has_perms(manage_webhooks=True)
     async def unregister(self, ctx: commands.Context):
         '''
         グローバルチャットの登録を解除します
         '''
-        guild = await q.Guild(self.bot,ctx.guild.id).get()
+        guild = await q.Guild(self.bot, ctx.guild.id).get()
         if guild.gc_channel is None:
             await ctx.send(f"グローバルチャットサービスはまだ利用していません")
         else:
             async with aiohttp.ClientSession() as session:
                 hook = discord.Webhook.from_url(
                     guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
-                await q.Guild(self.bot,ctx.guild.id).set(gc_channel=None, gc_url=None)
+                await q.Guild(self.bot, ctx.guild.id).set(gc_channel=None, gc_url=None)
                 await ctx.send(f"グローバルチャットサービスの利用を終了しました")
                 await hook.delete()
-
-    @register.error
-    @unregister.error
-    async def on_register_error(self, ctx: commands.Context, error: Exception):
-        if isinstance(error, commands.errors.CheckFailure):
-            ctx.handled = True
-            await self.bot.send_error(
-                ctx, "権限がありません",
-                f"`{ctx.command.name}`を実行するにはサーバーの管理の権限が必要です"
-            )
 
     @gc.command()
     async def report(self, ctx: commands.Context, user: discord.Member):
@@ -157,7 +149,10 @@ class GlobalChat(commands.Cog):
             except:
                 embed.add_field(name="サーバー", value="不明")
             await channel.send(embed=embed)
-            await confirm_message.clear_reactions()
+            try:
+                await confirm_message.clear_reactions()
+            except:
+                pass
             await ctx.send("通報が完了しました")
         if reaction.emoji == "❎":
             await confirm_message.clear_reactions()
@@ -168,12 +163,12 @@ class GlobalChat(commands.Cog):
         if message.author.bot or message.guild is None:
             return
         await asyncio.sleep(0.2)
-        guild = await q.Guild(self.bot,message.guild.id).get(verbose=2)
+        guild = await q.Guild(self.bot, message.guild.id).get(verbose=2)
         if int(guild.gc_channel) != message.channel.id:
             return
         guilds = [
             g
-            for g in await q.Guild.get_all(self.bot,verbose=2)
+            for g in await q.Guild.get_all(self.bot, verbose=2)
             if (int(g.id) != message.guild.id) and (g.gc_channel is not None)
         ]
         await asyncio.gather(*[
@@ -181,6 +176,11 @@ class GlobalChat(commands.Cog):
             for g in guilds
         ])
         await message.add_reaction("✅")
+        await asyncio.sleep(3)
+        try:
+            await message.clear_reactions()
+        except:
+            pass
 
     @report.error
     async def on_report_error(self, ctx: commands.Context, error: Exception):

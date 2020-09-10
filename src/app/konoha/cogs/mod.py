@@ -46,6 +46,7 @@ class Mod(commands.Cog):
 
     @commands.command()
     @checks.can_ban()
+    @checks.bot_can_ban()
     async def ban(self, ctx: commands.Context, users: commands.Greedy[discord.Member], *, reason: Optional[str]):
         '''
         ユーザーをBANします
@@ -58,27 +59,14 @@ class Mod(commands.Cog):
                 "BANを実行するには対象のユーザーを適切に指定する必要があります．\n\n" +
                 "ユーザーが存在するか，対象ユーザーのロールがこのBotやあなたより低いかをもう一度ご確認ください"
             )
-        embed = discord.Embed(title="以下のユーザーをBANします．よろしいですか？", color=0xff0000)
-        embed.description = " ".join(f"{user.mention}" for user in users)
-        embed.add_field(name="理由", value=reason if reason else "無し")
-        emojis = ("✅", "❌")
-        msg: discord.Message = await ctx.send(embed=embed)
-        await asyncio.gather(*[msg.add_reaction(emoji) for emoji in emojis])
-        try:
-            reaction, _ = await self.bot.wait_for('reaction_add', check=user_reaction_check(msg, emojis, ctx), timeout=60)
-        except:
-            return await ctx.send('しばらく応答がないためBANをキャンセルしました')
-        if reaction.emoji == emojis[0]:
-            await asyncio.gather(*[ctx.guild.ban(user, reason=reason)
-                                   for user in users])
-            await msg.clear_reactions()
-            await ctx.send('BANが完了しました')
-        else:
-            await ctx.send('BANをキャンセルしました')
-            await msg.delete()
+        await asyncio.gather(*[ctx.guild.ban(user, reason=reason)
+                               for user in users])
+
+        await ctx.send('BANが完了しました')
 
     @commands.command()
     @checks.can_ban()
+    @checks.bot_can_ban()
     async def unban(self, ctx: commands.Context, users: commands.Greedy[discord.User], *, reason: Optional[str]):
         '''
         ユーザーのBANを解除します
@@ -91,28 +79,14 @@ class Mod(commands.Cog):
                 "BANしたユーザーをBANリストから取り消すには対象のユーザーを適切に指定する必要があります．\n\n" +
                 "ユーザーが存在するか，対象ユーザーのロールがこのBotやあなたより低いかをもう一度ご確認ください"
             )
-        embed = discord.Embed(
-            title="以下のユーザーをBANリストから削除します．よろしいですか？", color=0xff0000)
-        embed.description = " ".join(f"{user.mention}" for user in users)
-        embed.add_field(name="理由", value=reason if reason else "無し")
-        emojis = ("✅", "❌")
-        msg: discord.Message = await ctx.send(embed=embed)
-        await asyncio.gather(*[msg.add_reaction(emoji) for emoji in emojis])
-        try:
-            reaction, _ = await self.bot.wait_for('reaction_add', check=user_reaction_check(msg, emojis, ctx), timeout=60)
-        except:
-            return await ctx.send('しばらく応答がないためUNBANをキャンセルしました')
-        if reaction.emoji == emojis[0]:
-            await asyncio.gather(*[ctx.guild.unban(user, reason=reason)
-                                   for user in users])
-            await msg.clear_reactions()
-            await ctx.send('BANリストからの削除が完了しました')
-        else:
-            await ctx.send('UNBANをキャンセルしました')
-            await msg.delete()
+        await asyncio.gather(*[ctx.guild.unban(user, reason=reason)
+                               for user in users])
+
+        await ctx.send('BANリストからの削除が完了しました')
 
     @commands.command()
     @checks.can_kick()
+    @checks.bot_can_kick()
     async def kick(self, ctx: commands.Context, users: commands.Greedy[discord.Member], *, reason: Optional[str]):
         '''
         ユーザーをサーバーから追放します
@@ -125,28 +99,14 @@ class Mod(commands.Cog):
                 "Kickを実行するには対象のユーザーを適切に指定する必要があります．\n\n" +
                 "ユーザーが存在するか，対象ユーザーのロールがこのBotやあなたより低いかをもう一度ご確認ください"
             )
-        embed = discord.Embed(
-            title="以下のユーザーをサーバーから追放します．よろしいですか？", color=0xff0000)
-        embed.description = " ".join(f"{user.mention}" for user in users)
-        embed.add_field(name="理由", value=reason if reason else "無し")
-        emojis = ("✅", "❌")
-        msg: discord.Message = await ctx.send(embed=embed)
-        await asyncio.gather(*[msg.add_reaction(emoji) for emoji in emojis])
-        try:
-            reaction, _ = await self.bot.wait_for('reaction_add', check=user_reaction_check(msg, emojis, ctx), timeout=60)
-        except:
-            return await ctx.send('しばらく応答がないためKickをキャンセルしました')
-        if reaction.emoji == emojis[0]:
-            await asyncio.gather(*[ctx.guild.kick(user, reason=reason)
-                                   for user in users])
-            await msg.clear_reactions()
-            await ctx.send('Kickが完了しました')
-        else:
-            await ctx.send('Kickをキャンセルしました')
-            await msg.delete()
+        await asyncio.gather(*[ctx.guild.kick(user, reason=reason)
+                               for user in users])
+
+        await ctx.send('Kickが完了しました')
 
     @commands.command()
     @checks.can_ban()
+    @checks.bot_can_ban()
     async def tempban(self, ctx: commands.Context, users: commands.Greedy[discord.Member], duration: DurationToSecondsConverter, *, reason: Optional[str]):
         '''
         ユーザーを指定した期間だけBANします
@@ -159,38 +119,20 @@ class Mod(commands.Cog):
                 "BANを実行するには対象のユーザーを適切に指定する必要があります．\n\n" +
                 "ユーザーが存在するか，対象ユーザーのロールがこのBotやあなたより低いかをもう一度ご確認ください"
             )
-        embed = discord.Embed(title="以下のユーザーをBANします．よろしいですか？", color=0xff0000)
-        print(duration)
-        embed.description = " ".join(f"{user.mention}" for user in users)
-        embed.add_field(
-            name="理由", value=reason if reason else "無し", inline=False)
-        embed.add_field(name="期間", value=duration["original"], inline=False)
-        emojis = ("✅", "❌")
-        msg: discord.Message = await ctx.send(embed=embed)
-        await asyncio.gather(*[msg.add_reaction(emoji) for emoji in emojis])
-        try:
-            reaction, _ = await self.bot.wait_for('reaction_add', check=user_reaction_check(msg, emojis, ctx), timeout=60)
-        except:
-            return await ctx.send('しばらく応答がないためBANをキャンセルしました')
-        if reaction.emoji == emojis[0]:
-            await asyncio.gather(*[ctx.guild.ban(user, reason=reason)
-                                   for user in users])
-            await msg.clear_reactions()
-            await ctx.send('BANが完了しました')
+        await asyncio.gather(*[ctx.guild.ban(user, reason=reason)
+                               for user in users])
 
-            await self.bot.timer.create_event(
-                'mod',
-                datetime.utcnow() + timedelta(seconds=duration["seconds"]),
-                {
-                    'type': 'BAN',
-                    'users': [user.id for user in users],
-                    'channel': ctx.channel.id,
-                    'guild': ctx.guild.id
-                }
-            )
-        else:
-            await ctx.send('BANをキャンセルしました')
-            await msg.delete()
+        await ctx.send('BANが完了しました')
+        await self.bot.timer.create_event(
+            'mod',
+            datetime.utcnow() + timedelta(seconds=duration["seconds"]),
+            {
+                'type': 'BAN',
+                'users': [user.id for user in users],
+                'channel': ctx.channel.id,
+                'guild': ctx.guild.id
+            }
+        )
 
     @commands.Cog.listener()
     async def on_mod_completed(self, payload):

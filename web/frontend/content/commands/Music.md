@@ -1,6 +1,6 @@
 ---
 title: Music
-description: 800 - 音楽再生機能
+description: 004 - 音楽再生機能
 ---
 
 <command 

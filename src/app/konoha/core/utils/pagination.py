@@ -106,7 +106,7 @@ class EmbedPaginator(commands.Paginator):
             except:
                 if not is_dm:
                     is_dm = True
-                    await ctx.send("DMでページ変更するにはリアクションを解除してもう一度押してください")
+                    await ctx.send("ページ変更するにはリアクションを解除してもう一度押してください")
                 pass
             if reaction.emoji == emojis[0]:  # 最初のページへ
                 curr = 0

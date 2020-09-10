@@ -38,6 +38,7 @@ class Reminder(commands.Cog):
 
     @commands.group(aliases=["rem"])
     @commands.guild_only()
+    @checks.bot_can_manage_messages()
     async def reminder(self, ctx: commands.Context):
         '''
         以下のサブコマンドとともに`{prefix}reminder create`のように実行して下さい

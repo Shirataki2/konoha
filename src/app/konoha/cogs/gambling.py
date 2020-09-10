@@ -35,11 +35,13 @@ class Gambling(commands.Cog):
         self.bot = bot
 
     def _subtask(self, ds):
-        img = Image.new('RGBA', (len(ds) * 64, 64))
+        sz = 48
+        img = Image.new('RGBA', (min(len(ds), 10) *
+                                 sz, sz * ((len(ds)-1) // 10 + 1)))
         for i, d in enumerate(ds):
             img2 = Image.open(f'./assets/dice-{d}.png')
-            img2 = img2.resize((64, 64))
-            img.paste(img2, (64 * i, 0))
+            img2 = img2.resize((sz, sz))
+            img.paste(img2, (sz * (i % 10), sz * (i // 10)))
         return img
 
     async def generate_dice_image(self, dices):
@@ -50,11 +52,13 @@ class Gambling(commands.Cog):
         return f
 
     @commands.command()
-    async def dice(self, ctx: commands.Context, num: int):
+    async def dice(self, ctx: commands.Context, num: int = 1):
         '''
-        6面のサイコロを`num`回振ります
+        6面のサイコロを`num`回振ります(最高100回)
         '''
-        num = min(10, max(1, num))
+        if num > 100:
+            await ctx.send(f'最大100個までです!\n{num}個は振れないけど代わりに100個なら振っとくよ!')
+        num = min(100, max(1, num))
         dices = random.choices(range(1, 7), k=num)
         f = await self.generate_dice_image(dices)
         file = discord.File(f, 'dice.png')

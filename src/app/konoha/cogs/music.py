@@ -159,7 +159,7 @@ class Music(commands.Cog):
         await ctx.send("曲を追加しました", embed=embed)
 
     @commands.command()
-    @checks.can_manage_message()
+    @checks.can_manage_messages()
     @commands.guild_only()
     async def rec(self, ctx: commands.Context):
         '''
@@ -175,7 +175,7 @@ class Music(commands.Cog):
             await ctx.invoke(self.recstop)
 
     @commands.command()
-    @checks.can_manage_message()
+    @checks.can_manage_messages()
     @commands.guild_only()
     async def recstop(self, ctx: commands.Context):
         '''

@@ -1,6 +1,6 @@
 ---
 title: Reaction
-description: 020 - リアクションで色々行う機能です
+description: 002 - リアクションで色々行う機能です
 ---
 
 <command 

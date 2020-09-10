@@ -110,6 +110,7 @@ class PlayList(asyncio.Queue):
 class VoiceState:
     def __init__(self, bot: Konoha, ctx: commands.Context):
         self.bot = bot
+        self.tts = False
         self.ctx = ctx
         self.loop = False
         self.loop_queue = False

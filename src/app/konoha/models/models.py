@@ -100,9 +100,28 @@ noun = Table(
 money = Table(
     "money",
     meta,
-    Column("user", String(24), nullable=False, primary_key=True),
+    Column("user", String(24), nullable=False),
     Column("guild", String(24), nullable=False),
     Column("amount", Integer),
     Column("turnip", Integer),
     Column("bonus", Integer),
+)
+
+starboard_config = Table(
+    "starboard_config",
+    meta,
+    Column("guild", String(24), nullable=False),
+    Column("channel", String(24), nullable=False),
+    Column("require", Integer, server_default='1'),
+    Column("enabled", Boolean, server_default=sa.sql.true()),
+)
+
+starboard = Table(
+    "starboard",
+    meta,
+    Column("guild", String(24), nullable=False),
+    Column("channel", String(24), nullable=False),
+    Column("message", String(24), nullable=False),
+    Column("user", String(24), nullable=False),
+    Column("board_message", String(24), nullable=False),
 )

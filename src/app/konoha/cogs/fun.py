@@ -8,6 +8,8 @@ import os
 import aiohttp
 import random
 import secrets
+from unicodedata import east_asian_width
+from itertools import cycle
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 from typing import Optional, Pattern
@@ -37,6 +39,44 @@ class Fun(commands.Cog):
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
+
+    def _get_unicode_length(self, message: str):
+        length = 0
+        for code in map(east_asian_width, message):
+            if code in ['W', 'A', 'F']:
+                length += 2
+            else:
+                length += 1
+        return length
+
+    def _to_suddendeath(self, message: str):
+        lines = message.split('\n')
+        lengths = list(map(self._get_unicode_length, lines))
+        max_length = max(lengths)
+        header_length = (max_length // 2 + 2)
+        footer_length = int(((max_length + 2) // 2 / 5) * 9 + 2)
+        header = '＿' + '人' * header_length + '＿'
+        footer = '￣' + \
+            ''.join(c for i, c in zip(range(footer_length), cycle('Y^'))) + '￣'
+        new_lines = []
+        new_lines.append(header)
+        for line, length in zip(lines, lengths):
+            spaces = '　' * ((max_length - length) // 2) + \
+                     ' ' * ((max_length - length) % 2)
+            new_lines.append('＞　' + line + spaces + '　＜')
+        new_lines.append(footer)
+        return '\n'.join(new_lines)
+
+    @commands.command(aliases=['sd'])
+    async def suddendeath(self, ctx: commands.Context, *, body: str = None):
+        '''
+        > 突然の死 <
+        '''
+        if body is None:
+            body = '突然の死'
+        if max(map(self._get_unicode_length, body.split('\n'))) > 25:
+            body = '一行が長すぎです！'
+        await ctx.send(self._to_suddendeath(body))
 
     @commands.command()
     @commands.guild_only()
@@ -176,7 +216,7 @@ class Fun(commands.Cog):
             )
 
     @commands.command(aliases=["create_emoji"])
-    @commands.cooldown(5, 30, commands.BucketType.guild)
+    @commands.cooldown(5, 60, commands.BucketType.guild)
     async def emocre(self, ctx: commands.Context, text,
                      color: Optional[ColorConverter],
                      font: Optional[FontConverter],
@@ -204,6 +244,12 @@ class Fun(commands.Cog):
         fp.seek(0)
         file = discord.File(fp, filename="emoji.png")
         await ctx.send(file=file)
+
+    @emocre.error
+    async def on_emocre_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            ctx.handled = True
+            await self.bot.send_cooldown_error(ctx, error, 5, 1)
 
 
 def setup(bot):

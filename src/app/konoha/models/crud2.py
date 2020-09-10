@@ -423,3 +423,64 @@ class Money:
     async def reset(bot, verbose=1):
         q = models.money.update(None).values(bonus=0)
         await bot.execute(q, verbose)
+
+
+class StarboardConfig:
+    def __init__(self, bot, guild_id, **kwargs):
+        self.guild_id = str(guild_id)
+        self.bot = bot
+
+    async def get(self, verbose=1):
+        q = models.starboard_config.select().where(
+            self.guild_id == models.starboard_config.c.guild
+        )
+        result = await self.bot.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def create(cls, bot, guild_id, verbose=1, **kwargs):
+        q = models.starboard_config.insert(
+            None).values(guild=guild_id, **kwargs)
+        await bot.execute(q, verbose)
+        return cls(bot, guild_id)
+
+    async def set(self, verbose=1, **kwargs):
+        q = models.starboard_config.update(None).where(
+            self.guild_id == models.starboard_config.c.guild
+        ).values(**kwargs)
+        await self.bot.execute(q, verbose)
+        return self
+
+
+class Starboard:
+    def __init__(self, bot, message_id, **kwargs):
+        self.message_id = str(message_id)
+        self.bot = bot
+
+    async def get(self, verbose=1):
+        q = models.starboard.select().where(
+            self.message_id == models.starboard.c.message
+        )
+        result = await self.bot.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def create(cls, bot, guild_id, channel_id, message_id, user_id, board_message_id, verbose=1, **kwargs):
+        q = models.starboard.insert(None).values(
+            guild=guild_id, channel=channel_id, user=user_id, message=message_id, board_message=board_message_id)
+        await bot.execute(q, verbose)
+        return cls(bot, board_message_id)
+
+    async def set(self, verbose=1, **kwargs):
+        q = models.starboard.update(None).where(
+            self.message_id == models.starboard.c.message
+        ).values(**kwargs)
+        await self.bot.execute(q, verbose)
+        return self
+
+    async def delete(self, verbose=1):
+        q = models.starboard.delete(None).where(
+            self.message_id == models.starboard.c.message
+        )
+        await self.bot.execute(q, verbose)
+        return self

@@ -25,6 +25,7 @@ pydub = "*"
 matplotlib = "*"
 opencv-python = "*"
 pyjwt = "*"
+cryptography = "*"
 
 [requires]
 python_version = "3.8"

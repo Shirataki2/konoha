@@ -66,7 +66,7 @@ class Bot(commands.Cog):
             ctx.send, embed=embed
         )
         db_dur, g = await get_duration(
-            q.Guild(self.bot,ctx.guild.id).get
+            q.Guild(self.bot, ctx.guild.id).get
         )
         embed.title = '🏓 Pong!'
         embed.description = f"{self.bot.user.mention}は正常稼働中です"
@@ -88,28 +88,6 @@ class Bot(commands.Cog):
         このURL先にアクセスするとBotをあなたのサーバーに招待する画面へと移行します．
         '''
         return await ctx.send(f"{config.oauth2_url}")
-
-    @commands.command()
-    async def timer(self, ctx: commands.Context, duration: DurationToSecondsConverter):
-        '''
-        指定した秒数後にあなた宛てにメンションを送信します
-        '''
-        if duration["seconds"] < 0:
-            return await ctx.send("負の時間待たせるとはどういうことなのでしょう(哲学)")
-        await self.bot.timer.create_event(
-            'timer',
-            datetime.utcnow() + timedelta(seconds=duration["seconds"]),
-            {"mention": str(ctx.author.mention), "channel": str(
-                ctx.channel.id), "timer": duration}
-        )
-        await ctx.send(f"{duration['original']}のタイマーを設定しました")
-
-    @commands.Cog.listener()
-    async def on_timer_completed(self, payload):
-        payload = json.loads(payload)
-        channel = await self.bot.fetch_channel(payload['channel'])
-        if channel:
-            await channel.send(f'{payload["mention"]} {payload["timer"]["original"]}経過しました')
 
     @commands.command(aliases=["server"])
     @commands.guild_only()
@@ -198,6 +176,11 @@ class Bot(commands.Cog):
             name='公開状態', value=f'{"Public" if appinfo.bot_public else "Private" }')
         embed.add_field(name='ID', value=f'{appinfo.id}')
         await ctx.send(embed=embed)
+
+    @commands.command(hidden=True)
+    @checks.bot_can_ban()
+    async def tmp(self, ctx: commands.Context):
+        pass
 
 
 def setup(bot):

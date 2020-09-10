@@ -1,6 +1,6 @@
 ---
 title: Administrator
-description: 900 - Botの管理用のコマンドです
+description: 999 - Botの管理用のコマンドです
 ---
 
 <command 

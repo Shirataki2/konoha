@@ -57,10 +57,10 @@ class Reaction(commands.Cog):
         {prefix}vote 集合何時にする？ 12時 2時 5時
         '''
         id = secrets.token_hex(16)[:6]
-        if len(options) > 26:
+        if len(options) > 20:
             return await self.bot.send_error(
                 ctx, "引数の数が多すぎます",
-                "選択肢は26個以内である必要があります"
+                "選択肢は20個以内である必要があります"
             )
         if len(options) < 1:
             return await self.bot.send_error(
@@ -113,7 +113,7 @@ class Reaction(commands.Cog):
         paginator = EmbedPaginator(title="投票一覧", color=config.theme_color,
                                    icon=str(self.bot.user.avatar_url), footer="Page $p / $P")
         paginator.new_page()
-        votes = await q.Vote.search(self.bot,guild=ctx.guild.id)
+        votes = await q.Vote.search(self.bot, guild=ctx.guild.id)
         if not votes:
             return await ctx.send("投票はまだ作成していません")
         for vote in votes:
@@ -128,7 +128,7 @@ class Reaction(commands.Cog):
         '''
         投票の集計結果を表示します
         '''
-        vote = await q.Vote(self.bot,id).get()
+        vote = await q.Vote(self.bot, id).get()
         if vote is None:
             return await ctx.send("該当の投票は存在しません")
         with ctx.typing():
