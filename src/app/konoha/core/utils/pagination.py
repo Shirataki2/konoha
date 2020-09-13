@@ -80,7 +80,7 @@ class EmbedPaginator(commands.Paginator):
         if len(self.content) == 1:
             return await ctx.send(embed=self.render(curr))
         message: discord.Message = await ctx.send(embed=self.render(curr))
-        emojis = ("\u23EE", "\u2B05", "\u23F9", "\u27A1", "\u23ED")
+        emojis = ("\u23EE", "\u2B05", "🇽", "\u27A1", "\u23ED")
         for emoji in emojis:
             await message.add_reaction(emoji)
 

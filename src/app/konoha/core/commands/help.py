@@ -56,15 +56,15 @@ class CustomHelpCommand(commands.HelpCommand):
         bot = ctx.bot
         cogs = [bot.get_cog(cog) for cog in bot.cogs]
         cogs.sort(key=lambda cog: cog.order)
+        commands = [command for command in await self.filter_commands(bot.commands)]
         paginator = EmbedPaginator(
             footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",
-            author="Help | Page $p / $P",
+            author=f"Help | Page $p / $P ({len(commands)} commands)",
             icon=str(ctx.bot.user.avatar_url),
             color=config.theme_color
         )
         i = -1
         for cog in cogs:
-            commands = [command for command in await self.filter_commands(bot.commands)]
             runnables = []
             for c in cog.walk_commands():
                 try:

@@ -126,3 +126,15 @@ starboard = Table(
     Column("user", String(24), nullable=False),
     Column("board_message", String(24), nullable=False),
 )
+
+rolepanel = Table(
+    "rolepanel",
+    meta,
+    Column("id", String(16), nullable=False,
+           primary_key=True),
+    Column("guild", String(24), nullable=False),
+    Column("channel", String(24), nullable=False),
+    Column("message", String(24), nullable=False),
+    Column("user", String(24), nullable=False),
+    Column("payload", String(1000), nullable=False),
+)

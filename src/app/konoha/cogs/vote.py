@@ -19,21 +19,13 @@ from time import perf_counter
 
 import konoha
 import konoha.models.crud2 as q
+from konoha.core.utils.consts import alphabet_emojis
 from konoha.core.utils.pagination import EmbedPaginator
 from konoha.core import config
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
 from konoha.core.log.logger import get_module_logger
 logger = get_module_logger(__name__)
-
-
-emojis = [
-    "🇦", "🇧", "🇨", "🇩", "🇪",
-    "🇫", "🇬", "🇭", "🇮", "🇯",
-    "🇰", "🇱", "🇲", "🇳", "🇴",
-    "🇵", "🇶", "🇷", "🇸", "🇹",
-    "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"
-]
 
 
 class Vote(commands.Cog):
@@ -80,7 +72,7 @@ class Vote(commands.Cog):
         ln_len = 0
         if not options:
             options = ('はい', 'いいえ')
-        for emoji, option in zip(emojis, options):
+        for emoji, option in zip(alphabet_emojis, options):
             c = f"{emoji} {option}　"
             ln_len += len(c)
             embed.description += c
@@ -90,7 +82,7 @@ class Vote(commands.Cog):
         embed.description = embed.description.rstrip("\n")
         embed.set_footer(text=f"vote_listコマンドで投票の一覧を確認できます")
         msg: discord.Message = await ctx.send(embed=embed)
-        for emoji in emojis[:len(options)]:
+        for emoji in alphabet_emojis[:len(options)]:
             await msg.add_reaction(emoji)
         await q.Vote.create(
             self.bot,
@@ -138,7 +130,7 @@ class Vote(commands.Cog):
         ln_len = 0
         if not options:
             options = ('はい', 'いいえ')
-        for emoji, option in zip(emojis, options):
+        for emoji, option in zip(alphabet_emojis, options):
             c = f"{emoji} {option}　"
             ln_len += len(c)
             embed.description += c
@@ -148,7 +140,7 @@ class Vote(commands.Cog):
         embed.description = embed.description.rstrip("\n")
         embed.set_footer(text=f"vote_listコマンドで投票の一覧を確認できます")
         msg: discord.Message = await ctx.send(embed=embed)
-        for emoji in emojis[:len(options)]:
+        for emoji in alphabet_emojis[:len(options)]:
             await msg.add_reaction(emoji)
         await q.Vote.create(
             self.bot,
@@ -232,7 +224,7 @@ class Vote(commands.Cog):
             points = {i: [k, 0, "", None] for i, k in enumerate(args)}
             for reaction in msg.reactions:
                 try:
-                    idx = emojis.index(reaction.emoji)
+                    idx = alphabet_emojis.index(reaction.emoji)
                 except ValueError:
                     continue
                 points[idx][3] = reaction.emoji
@@ -284,7 +276,7 @@ class Vote(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.guild_id is None or not payload.emoji.name in emojis:
+        if payload.guild_id is None or not payload.emoji.name in alphabet_emojis:
             return
         votes = await q.Vote.search(self.bot, message=payload.message_id)
         if len(votes) > 0:

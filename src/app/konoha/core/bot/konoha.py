@@ -3,6 +3,10 @@ from discord.ext import commands
 
 import traceback
 import secrets
+import jaconv
+import MeCab
+from typing import List
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from konoha.core import config
@@ -22,6 +26,8 @@ class Konoha(BotBase):
         self.timer = Timer()
         self.timer.start(self)
         self.custom_emojis = CustomEmoji(self)
+        self.tagger = MeCab.Tagger()
+        self.wakati = MeCab.Tagger('-Owakati')
 
     @property
     def tomorrow(self):
@@ -88,3 +94,33 @@ class Konoha(BotBase):
             )
         logger.debug(f"{ctx.message.content}")
         logger.debug("===================")
+
+    async def morph(self, text: str) -> List['Word']:
+        def _morph():
+            node = self.tagger.parseToNode(text)
+            words: List[Word] = []
+            while node:
+                word = node.surface
+                feats = node.feature.split(',')
+                if word != '':
+                    words.append(Word(
+                        name=word,
+                        yomi=jaconv.kata2hira(feats[-2]),
+                        pos=feats[0],
+                        subpos1=feats[1],
+                        subpos2=feats[2],
+                        subpos3=feats[3],
+                    ))
+                node = node.next
+            return words
+        return await self.loop.run_in_executor(None, _morph)
+
+
+@dataclass
+class Word:
+    name: str
+    yomi: str
+    pos: str
+    subpos1: str
+    subpos2: str
+    subpos3: str

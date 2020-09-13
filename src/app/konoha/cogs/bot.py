@@ -177,11 +177,6 @@ class Bot(commands.Cog):
         embed.add_field(name='ID', value=f'{appinfo.id}')
         await ctx.send(embed=embed)
 
-    @commands.command(hidden=True)
-    @checks.bot_can_ban()
-    async def tmp(self, ctx: commands.Context):
-        pass
-
 
 def setup(bot):
     bot.add_cog(Bot(bot))

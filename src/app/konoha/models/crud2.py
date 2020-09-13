@@ -491,3 +491,44 @@ class Starboard:
         )
         await self.bot.execute(q, verbose)
         return self
+
+
+class RolePanel:
+    def __init__(self, bot, message_id, **kwargs):
+        self.message_id = str(message_id)
+        self.bot = bot
+
+    async def get(self, verbose=1):
+        q = models.rolepanel.select().where(
+            self.message_id == models.rolepanel.c.message
+        )
+        result = await self.bot.execute(q, verbose)
+        return await result.fetchone()
+
+    @classmethod
+    async def create(cls, bot, id, guild_id, channel_id, message_id, user_id, payload, verbose=1, **kwargs):
+        q = models.rolepanel.insert(None).values(
+            id=id, guild=guild_id, channel=channel_id, user=user_id, message=message_id, payload=payload)
+        await bot.execute(q, verbose)
+        return cls(bot, message_id)
+
+    async def set(self, verbose=1, **kwargs):
+        q = models.rolepanel.update(None).where(
+            self.message_id == models.rolepanel.c.message
+        ).values(**kwargs)
+        await self.bot.execute(q, verbose)
+        return self
+
+    async def delete(self, verbose=1):
+        q = models.rolepanel.delete(None).where(
+            self.message_id == models.rolepanel.c.message
+        )
+        await self.bot.execute(q, verbose)
+        return self
+
+    @staticmethod
+    async def search(bot, verbose=1, **kwargs):
+        q = models.rolepanel.select().where(
+            and_(*[v == getattr(models.rolepanel.c, k) for k, v in kwargs.items()]))
+        result = await bot.execute(q, verbose)
+        return await result.fetchall()

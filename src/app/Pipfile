@@ -26,6 +26,9 @@ matplotlib = "*"
 opencv-python = "*"
 pyjwt = "*"
 cryptography = "*"
+mecab-python3 = "*"
+jaconv = "*"
+emoji = "*"
 
 [requires]
 python_version = "3.8"
