@@ -3,15 +3,18 @@ services:
   konoha:
     build: ./src
     tty: true
+    restart: always
     working_dir: /workspace/konoha/app
     entrypoint: bash ./entrypoint.sh --prod
     links: 
       - mysql
+      - lavalink
     volumes:
       - ./src:/workspace/konoha
   api:
     build: ./src
     tty: true
+    restart: always
     working_dir: /workspace/konoha/app
     entrypoint: bash ./entrypoint.api.sh
     links: 
@@ -24,6 +27,7 @@ services:
     build:
       dockerfile: Prod.Dockerfile
       context: ./web/frontend
+    restart: always
     tty: true
     entrypoint: yarn start
     env_file:
@@ -49,3 +53,7 @@ services:
       - ./prod/db/sql:/docker-entrypoint-initdb.d
     ports: 
       - 13306:3306
+  lavalink:
+    image: fredboat/lavalink:dev
+    volumes:
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml
