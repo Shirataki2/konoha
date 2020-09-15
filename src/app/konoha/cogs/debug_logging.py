@@ -9,7 +9,6 @@ import tabulate
 import aiomysql
 import glob
 import json
-import wavelink
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional
@@ -33,14 +32,23 @@ async def get_duration(coro, *args, **kwargs):
     return (end - start) * 1000, ret
 
 
-class Test(commands.Cog):
+class DebugLogging(commands.Cog):
     '''
-    実験中の機能
+    開発用の実行ログ
     '''
-    order = 100
+    order = -1
+    log_channel = 754991343960326174
 
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
+        self._channel = None
+
+    @property
+    def channel(self):
+        if self._channel is None:
+            self._channel = self.bot.get_channel(self.log_channel)
+        return self._channel
+
 
 def setup(bot):
-    bot.add_cog(Test(bot))
+    bot.add_cog(DebugLogging(bot))

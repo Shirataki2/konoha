@@ -42,7 +42,10 @@ class Konoha(BotBase):
             return update_time + timedelta(days=1)
 
     async def on_ready(self):
-        await self.timer.create_event('daily', self.tomorrow, None)
+        ev = await q.Timer.search(self, event='daily')
+        if not ev:
+            logger.debug('Create Daily Event')
+            await self.timer.create_event('daily', self.tomorrow, None)
         await super().on_ready()
 
     async def send_notification(self, ctx: commands.Context, title: str, description: str = None):

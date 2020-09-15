@@ -1,10 +1,15 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands, tasks, menus
 
 import asyncio
 import aiohttp
 import secrets
+import copy
+import wavelink
 import os
+import random
+import re
+from datetime import datetime, timedelta
 from typing import Dict, List
 
 import konoha.models.crud2 as q
@@ -12,291 +17,594 @@ from konoha.core import config
 from konoha.core.commands import checks
 from konoha.core.bot.konoha import Konoha
 from konoha.core.log.logger import get_module_logger
-from konoha.extensions.music import VoiceState, YTDLDownloader, Video, Song
+from konoha.core.utils.pagination import EmbedPaginator
 from konoha.extensions.voice_client import ExtendedVoiceClient
 
 logger = get_module_logger(__name__)
 
 
-class Music(commands.Cog):
+class NoChannelProvidedException(commands.CommandError):
+    pass
+
+
+class InvalidChannelException(commands.CommandError):
+    pass
+
+
+class Track(wavelink.Track):
+    __slot__ = ('requester',)
+
+    def __init__(self, *args, **kwargs):
+        self.requester = kwargs.pop('requester', None)
+        super().__init__(*args, **kwargs)
+
+
+class Queue(asyncio.Queue):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def to_paginator(self):
+        paginator = EmbedPaginator(
+            title="再生リスト", color=config.theme_color, footer="Page $p / $P")
+        paginator.new_page()
+        if self.qsize() == 0:
+            return None
+        for i, track in enumerate(self._queue.__iter__()):
+            track: Track
+            paginator.add_row(
+                f"[{i+1}] {track.title}", f"Requested by {track.requester.mention}\n[元動画はこちら！]({track.uri})")
+        return paginator
+
+
+class PlayerController(menus.Menu):
+    def __init__(self, *, embed: discord.Embed, player: 'Player'):
+        super().__init__(timeout=None)
+        self.embed = embed
+        self.player = player
+
+    def update_context(self, payload: discord.RawReactionActionEvent):
+        ctx = copy.copy(self.ctx)
+        ctx.author = payload.member
+        return ctx
+
+    def reaction_check(self, payload: discord.RawReactionActionEvent):
+        if payload.event_type == 'REACTION_REMOVE':
+            return False
+        if not payload.member:
+            return False
+        if payload.member.bot or payload.message_id != self.message.id:
+            return False
+        if payload.member not in self.bot.get_channel(int(self.player.channel_id)).members:
+            return False
+
+        return payload.emoji in self.buttons
+
+    async def send_initial_message(self, ctx, channel):
+        return await channel.send(embed=self.embed)
+
+    @menus.button('\N{BLACK RIGHT-POINTING TRIANGLE}')
+    async def resume_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('resume')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{DOUBLE VERTICAL BAR}')
+    async def pause_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('pause')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{BLACK SQUARE FOR STOP}')
+    async def stop_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('stop')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}')
+    async def skip_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('skip')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{TWISTED RIGHTWARDS ARROWS}')
+    async def shuffle_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('shuffle')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS WITH CIRCLED ONE OVERLAY}')
+    async def repeat_single_track_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('loop_single_track')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}')
+    async def repeat_queue_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('loop')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{HEAVY PLUS SIGN}')
+    async def volume_up_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('volup')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+    @menus.button('\N{HEAVY MINUS SIGN}')
+    async def volume_down_command(self, payload: discord.RawReactionActionEvent):
+        ctx = self.update_context(payload)
+        command = self.bot.get_command('voldown')
+        ctx.command = command
+        channel = ctx.bot.get_channel(int(payload.channel_id))
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.remove_reaction(payload.emoji, payload.member)
+        await self.bot.invoke(ctx)
+
+
+class Player(wavelink.Player):
+    def __init__(self, *args, **kwargs):
+        self.context: commands.Context = kwargs.pop('context', None)
+        super().__init__(*args, **kwargs)
+        self.queue = Queue()
+        self.waiting = False
+        self.updating = False
+        self.next = None
+        self.loop_single_track = False
+        self.loop = False
+
+    async def play_next(self):
+        if self.loop and self.next:
+            await self.queue.put(self.next)
+        if self.is_playing or self.waiting:
+            return
+        try:
+            if self.loop_single_track:
+                track = self.next
+            else:
+                track = await asyncio.wait_for(
+                    self.queue.get(), 180,
+                    loop=self.context.bot.loop
+                )
+        except asyncio.TimeoutError:
+            return await self.teardown()
+        await self.play(track)
+        self.next = track
+        self.waiting = False
+        await self.invoke_controller()
+
+    async def invoke_controller(self):
+        if self.updating:
+            return
+        self.updating = True
+        if not hasattr(self, 'controller'):
+            self.controller = PlayerController(
+                embed=self._build_embed(), player=self)
+            await self.controller.start(self.context)
+        elif not await self._is_fresh_position():
+            try:
+                await self.controller.message.delete()
+            except discord.HTTPException:
+                pass
+            self.controller.stop()
+            self.controller = PlayerController(
+                embed=self._build_embed(), player=self)
+            await self.controller.start(self.context)
+        else:
+            embed = self._build_embed()
+            await self.controller.message.edit(embed=embed)
+        self.updating = False
+
+    def _build_embed(self):
+        track: Track = self.current
+        if not track:
+            return
+        channel = self.bot.get_channel(int(self.channel_id))
+        embed = discord.Embed(
+            title=f'Music Controller | {channel.name}', color=config.theme_color)
+        embed.description = f'Now Playing...\n```\n{track.title}\n```\n'
+        embed.set_image(url=track.thumb)
+        embed.add_field(name='Duration', value=str(
+            timedelta(milliseconds=int(track.length))))
+        embed.add_field(name='Volume', value=f'**`{self.volume} %`**')
+        embed.add_field(name='Requester', value=track.requester.mention)
+        embed.add_field(name='動画URL', value=f'[元動画にアクセス！]({track.uri})')
+        embed.add_field(name='ループ', value='ON' if self.loop else 'OFF')
+        embed.add_field(
+            name='1曲ループ', value='ON' if self.loop_single_track else 'OFF')
+        return embed
+
+    async def _is_fresh_position(self):
+        try:
+            async for msg in self.context.channel.history(limit=3):
+                if msg.id == self.controller.message.id:
+                    return True
+        except (AttributeError, discord.HTTPException):
+            return False
+        return False
+
+    async def teardown(self):
+        try:
+            await self.controller.message.delete()
+        except discord.HTTPException:
+            pass
+        self.controller.stop()
+        try:
+            await self.destroy()
+        except KeyError:
+            pass
+
+
+class Music(commands.Cog, wavelink.WavelinkMixin):
     """
     音楽の再生を行います
-
-    再生のためには以下の手順を踏みます
-
-    1. **ボイスチャットに入室する**
-
-    2. **{{prefix}join` コマンドを実行する**
-
-    3. **`{prefix}play 曲名` コマンドで曲を検索する**
-
-    4. **所望の曲の番号を選択しよう！**
-
-    5. **YoutubeのURLを直接入力することでも再生可能です**
     """
     order = 4
 
+    URL_REG = re.compile(r'https?://(?:www\.)?.+')
+
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
-        self.voice_states: Dict[str, VoiceState] = {}
+        if not hasattr(self, 'wavelink'):
+            self.bot.wavelink = wavelink.Client(bot=bot)
+        self.bot.loop.create_task(self.start_nodes())
 
-    def get_voice_state(self, ctx):
-        if vs := self.voice_states.get(ctx.guild.id):
-            return vs
-        vs = VoiceState(self.bot, ctx)
-        self.voice_states[ctx.guild.id] = vs
-        return vs
+    async def start_nodes(self):
+        await self.bot.wait_until_ready()
+        if self.bot.wavelink.nodes:
+            prev = self.bot.wavelink.nodes.copy()
+            for node in prev.values():
+                await node.destroy()
+        nodes = [
+            {
+                'host': 'lavalink',
+                'port': 22222,
+                'rest_uri': 'http://lavalink:22222',
+                'password': config.lava_password,
+                'identifier': 'MAIN',
+                'region': 'japan'
+            },
+        ]
+        await asyncio.gather(*[
+            self.bot.wavelink.initiate_node(**node) for node in nodes
+        ], loop=self.bot.loop)
 
-    def cog_unload(self):
-        for vs in self.voice_states.values():
-            self.bot.loop.create_task(vs.stop())
+    @wavelink.WavelinkMixin.listener()
+    async def on_node_ready(self, node: wavelink.Node):
+        logger.debug(f'Wavelink Node {node.identifier} ... 準備完了')
+
+    @wavelink.WavelinkMixin.listener('on_track_stuck')
+    @wavelink.WavelinkMixin.listener('on_track_end')
+    @wavelink.WavelinkMixin.listener('on_track_exception')
+    async def on_player_stop(self, node, payload):
+        await payload.player.play_next()
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        if member.bot:
+            return
+        player: Player = self.bot.wavelink.get_player(
+            member.guild.id, cls=Player)
+        if not player.channel_id or not player.context:
+            player.node.players.pop(member.guild.id)
+            return
+
+    async def cog_command_error(self, ctx, error):
+        if isinstance(error, NoChannelProvidedException):
+            ctx.handled = True
+            return await self.bot.send_error(
+                ctx, 'どこで再生すればいいかわかりません！',
+                '先にボイスチャンネルに入室するか，接続先のボイスチャンネルを指定する必要があります！'
+            )
+        if isinstance(error, discord.NotFound):
+            ctx.handled = True
+            return
+
+    async def cog_check(self, ctx):
+        if not ctx.guild:
+            raise commands.NoPrivateMessage
+        return True
 
     async def cog_before_invoke(self, ctx: commands.Context):
-        if not ctx.guild:
-            raise commands.NoPrivateMessage('このコマンドはDM上では実行できません')
-        ctx.vs = self.get_voice_state(ctx)
-
-    @commands.command(invoked_subcommand=True)
-    @commands.guild_only()
-    async def join(self, ctx: commands.Context):
-        '''
-        Botがボイスチャンネルに参加します
-
-        このコマンドを呼び出したユーザが入っているボイスチャンネルに入室するので
-        呼び出す前に特定のボイスチャンネルに参加している必要があります
-        '''
-        ch = ctx.author.voice.channel
-        if ctx.vs.vc:
-            return await ctx.vs.vc.move_to(ch)
-        ctx.vs.vc = ExtendedVoiceClient(await ch.connect())
-
-    @commands.command()
-    @commands.guild_only()
-    async def leave(self, ctx: commands.Context):
-        '''
-        Botを退出させてプレイリストを空にします
-        '''
-        if not ctx.vs.vc:
-            return await ctx.send('まだボイスチャンネルに参加していません')
-        await ctx.vs.stop()
-        del self.voice_states[ctx.guild.id]
-
-    @commands.command()
-    @commands.guild_only()
-    async def volume(self, ctx: commands.Context, *, volume: int):
-        '''
-        再生ボリューム変更します
-
-        0%から300%の範囲で指定可能です
-        '''
-        if 0 > volume > 300:
-            return await ctx.send('ボリュームは0~300%の間で指定可能です')
-        ctx.vs.volume = volume / 100
-        return await ctx.send(f'ボリュームを **{volume}%** に変更しました')
-
-    @commands.command()
-    @commands.guild_only()
-    async def pause(self, ctx: commands.Context):
-        if ctx.vs.is_playing and ctx.vs.vc.is_playing():
-            ctx.vs.vc.pause()
-            await ctx.message.add_reaction('⏸')
-
-    @commands.command()
-    @commands.guild_only()
-    async def resume(self, ctx: commands.Context):
-        if not ctx.vs.is_playing and not ctx.vs.vc.is_playing():
-            ctx.vs.vc.pause()
-            await ctx.message.add_reaction('▶')
-
-    async def song_select(self, songs: List[Video], ctx: commands.Context):
-        embed = discord.Embed(title="曲を選んでください", color=config.theme_color)
-        emojis = ("1⃣", "2⃣", "3⃣", "4⃣", "5⃣")
-        for emoji, song in zip(emojis, songs):
-            embed.add_field(name=f"{emoji} {song.title}",
-                            value=song.webpage_url, inline=False)
-        message = await ctx.send(embed=embed)
-        for emoji, _ in zip(emojis, songs):
-            await message.add_reaction(emoji)
-
-        def check_reaction(r: discord.Reaction, u: discord.Member):
-            return all([
-                r.message.id == message.id,
-                str(r.emoji) in emojis,
-                u.id != ctx.bot.user.id
-            ])
-        while True:
-            try:
-                reaction, _ = await ctx.bot.wait_for("reaction_add", timeout=30, check=check_reaction)
-            except asyncio.TimeoutError:
-                for emoji in emojis:
-                    await message.clear_reaction(emoji)
-                break
-            for i, emoji in enumerate(emojis):
-                if reaction.emoji == emoji:
-                    await message.delete()
-                    return i
-
-    @commands.command()
-    @commands.guild_only()
-    async def play(self, ctx: commands.Context, *, query):
-        '''
-        与えられたクエリから曲を検索してプレイリストに追加します
-        '''
-        if not ctx.vs.vc:
-            await ctx.invoke(self.join)
-        ytdl = YTDLDownloader(ctx)
-        async with ctx.typing():
-            songs = await ytdl.search(query)
-        if not songs:
-            return await ctx.send("曲が見つかりませんでした")
-        elif len(songs) == 1:
-            song = Song(songs[0], ctx)
-        else:
-            song = Song(songs[await self.song_select(songs, ctx)], ctx)
-        await ctx.vs.queue.put(song)
-        embed = song.to_embed()
-        embed.set_author(name="New Song", icon_url=self.bot.user.avatar_url)
-        await ctx.send("曲を追加しました", embed=embed)
-
-    @commands.command()
-    @checks.can_manage_messages()
-    @commands.guild_only()
-    async def rec(self, ctx: commands.Context):
-        '''
-        最大30秒間，ボイスチャンネルを録音します
-        '''
-        if not ctx.vs.vc:
-            await ctx.invoke(self.join)
-        if not ctx.vs.vc.ws.is_receiving:
-            self.fp = secrets.token_hex(6) + '.mp3'
-            ctx.vs.vc.ws.start_receive(self.fp)
-            await ctx.send("録音を開始しました")
-            await asyncio.sleep(30)
-            await ctx.invoke(self.recstop)
-
-    @commands.command()
-    @checks.can_manage_messages()
-    @commands.guild_only()
-    async def recstop(self, ctx: commands.Context):
-        '''
-        録音を停止します
-        '''
-        if ctx.vs.vc.ws.is_receiving:
-            ctx.vs.vc.ws.stop_receive()
-            await ctx.send("録音を終了します")
-            await ctx.vs.vc.ws.decoder.decoded.wait()
-            await ctx.send(file=discord.File(self.fp))
-            os.remove(self.fp)
-
-    @rec.error
-    @recstop.error
-    async def on_rec_error(self, ctx: commands.Context, error: Exception):
-        if isinstance(error, commands.errors.CheckFailure):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx)
+        if player.context and player.context.channel != ctx.channel:
             ctx.handled = True
-            await self.bot.send_error(
-                ctx, "権限がありません",
-                f"`{ctx.command.name}`を実行するにはメッセージ管理の権限が必要です"
+            await self.send_error(
+                ctx, '呼び出したチャンネル以外から音楽を操作することはできません！'
+                f'音楽を操作するには呼び出したチャンネル({player.context.channel.mention})にてコマンドを呼び出してください'
             )
+            raise InvalidChannelException
+        try:
+            channel = self.bot.get_channel(int(player.channel_id))
+        except TypeError:
+            channel = None
+
+        if any([
+            ctx.command.name == 'connect' and not player.context,
+            not player.channel_id,
+            not channel
+        ]):
+            return
+        if player.is_connected and ctx.author not in channel.members:
+            await self.send_error(
+                ctx, 'ボイスチャンネル未入室状態で音楽を操作することはできません！'
+                f'音楽を操作するにはボイスチャンネル {channel.name} に入室してください'
+            )
+            raise InvalidChannelException
+
+    @commands.command(aliases=['join'])
+    async def connect(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx)
+        if player.is_connected:
+            return await ctx.send('既に接続済みです')
+        channel = getattr(ctx.author.voice, 'channel', channel)
+        if channel is None:
+            raise NoChannelProvidedException
+        await player.connect(channel.id)
 
     @commands.command()
-    @commands.guild_only()
-    async def stop(self, ctx: commands.Context):
-        '''
-        曲の再生を止めプレイリストを空にします
-        '''
-        ctx.vs.queue.clear()
-        if not ctx.vs.is_playing:
-            ctx.vs.vc.stop()
-            await ctx.message.add_reaction('⏹')
-
-    @commands.command()
-    @commands.guild_only()
-    async def skip(self, ctx: commands.Context):
-        """
-        曲をスキップさせます
-        """
-
-        if not ctx.vs.is_playing:
-            return await ctx.send('何も再生していません')
-        ctx.vs.skip()
-        return await ctx.message.add_reaction('⏭')
-
-    @commands.command(aliases=["playlist"])
-    @commands.guild_only()
-    async def queue(self, ctx: commands.Context):
-        """
-        再生リストを表示します
-        """
-        paginator = ctx.vs.queue.to_paginator()
-        if paginator:
-            await paginator.paginate(ctx)
+    async def play(self, ctx: commands.Context, *, query: str):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            await ctx.invoke(self.connect)
+        if not self.URL_REG.match(query):
+            query = f'ytsearch:{query}'
+        tracks = await self.bot.wavelink.get_tracks(query)
+        if not tracks:
+            return await ctx.send('検索しましたが，指定の曲を見つけることができませんでした', delete_after=10)
+        if isinstance(tracks, wavelink.TrackPlaylist):
+            await ctx.send(embed=self._playlist_to_embed(tracks), delete_after=15)
+            for track in tracks.tracks:
+                track = Track(track.id, track.info, requester=ctx.author)
+                await ctx.send(embed=self._song_to_embed(player, track), delete_after=15)
+                await player.queue.put(track)
         else:
-            await ctx.send("現在プレイリストに曲はありません")
+            track = Track(tracks[0].id, tracks[0].info, requester=ctx.author)
+            await ctx.send(embed=self._song_to_embed(player, track), delete_after=15)
+            await player.queue.put(track)
+        if not player.is_playing:
+            await player.play_next()
 
     @commands.command()
-    @commands.guild_only()
-    async def shuffle(self, ctx: commands.Context):
-        """
-        再生リストをシャッフルします
-        """
-
-        if len(ctx.vs.queue) == 0:
-            return await ctx.send('プレイリストは空です')
-
-        ctx.vs.queue.shuffle()
-        await ctx.message.add_reaction('✅')
-
-    @commands.command()
-    @commands.guild_only()
-    async def remove(self, ctx: commands.Context, index: int):
-        """
-        指定したインデックスの曲をプレイリストから削除します
-        """
-
-        if len(ctx.vs.queue) == 0:
-            return await ctx.send('The playlist is empty.')
-
-        ctx.vs.queue.remove(index - 1)
-        await ctx.message.add_reaction('✅')
+    async def pause(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if player.is_paused or not player.is_connected:
+            return
+        try:
+            await ctx.message.add_reaction('\N{DOUBLE VERTICAL BAR}')
+        except:
+            pass
+        await player.set_pause(True)
+        await asyncio.sleep(3)
+        try:
+            await ctx.message.remove_reaction('\N{DOUBLE VERTICAL BAR}', self.bot.user)
+        except:
+            pass
 
     @commands.command()
-    @commands.guild_only()
+    async def resume(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_paused or not player.is_connected:
+            return
+        try:
+            await ctx.message.add_reaction('\N{BLACK RIGHT-POINTING TRIANGLE}')
+        except:
+            pass
+        await player.set_pause(False)
+        await asyncio.sleep(3)
+        try:
+            await ctx.message.remove_reaction('\N{BLACK RIGHT-POINTING TRIANGLE}', self.bot.user)
+        except:
+            pass
+
+    @commands.command()
+    async def skip(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        try:
+            await ctx.message.add_reaction('\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}')
+        except:
+            pass
+        await player.stop()
+        await asyncio.sleep(3)
+        try:
+            await ctx.message.remove_reaction('\N{BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR}', self.bot.user)
+        except:
+            pass
+
+    @commands.command()
+    async def stop(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        try:
+            await ctx.message.add_reaction('\N{BLACK SQUARE FOR STOP}')
+        except:
+            pass
+        await player.teardown()
+        await asyncio.sleep(3)
+        try:
+            await ctx.message.remove_reaction('\N{BLACK SQUARE FOR STOP}', self.bot.user)
+        except:
+            pass
+
+    @commands.command()
     async def loop(self, ctx: commands.Context):
-        """
-        現在再生中の曲をループします
-        """
-
-        if not ctx.vs.is_playing:
-            return await ctx.send('何も再生していません')
-        ctx.vs.loop = not ctx.vs.loop
-        await ctx.message.add_reaction('✅')
-        await ctx.send(f'ループを{"有" if ctx.vs.loop else "無"}効にしました')
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        player.loop = not player.loop
+        await player.invoke_controller()
 
     @commands.command()
-    @commands.guild_only()
-    async def loop_queue(self, ctx: commands.Context):
-        """
-        プレイリスト内の曲目をループし続けます
-        """
+    async def loop_single_track(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        player.loop_single_track = not player.loop_single_track
+        await player.invoke_controller()
 
-        if not ctx.vs.is_playing:
-            return await ctx.send('何も再生していません')
-        ctx.vs.loop_queue = not ctx.vs.loop_queue
-        await ctx.message.add_reaction('✅')
-        await ctx.send(f'ループを{"有" if ctx.vs.loop else "無"}効にしました')
+    @commands.command()
+    async def remove(self, ctx: commands.Context, index: int):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        index -= 1
+        qsize = player.queue.qsize()
+        if not 0 <= index < qsize:
+            return await ctx.send('指定した番号の曲はまだ追加されていません')
+        track = player.queue._queue[index]
+        del player.queue._queue[index]
+        embed = self._song_to_embed(player, track)
+        embed.title = '曲を削除しました'
+        embed.color = 0xff0000
+        await ctx.send(embed=embed, delete_after=10)
 
-    @join.before_invoke
-    @play.before_invoke
-    @rec.before_invoke
-    async def ensure_voice_state(self, ctx: commands.Context):
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            await ctx.send('ボイスチャンネルに入室した後に実行してください')
-            raise Exception
+    @commands.command(aliases=["vol"])
+    async def volume(self, ctx: commands.Context, *, vol: int):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        if not 0 <= vol <= 100:
+            return await ctx.send('音量は**0から100**(%)の間で指定してください')
+        await player.set_volume(vol)
+        await player.invoke_controller()
+        return await ctx.send(f'音量を**{vol}%**に設定しました', delete_after=5)
 
-        if ctx.voice_client:
-            if ctx.voice_client.channel != ctx.author.voice.channel:
-                await ctx.send('既に入室しています')
-                raise Exception
+    @commands.command(hidden=True)
+    async def volup(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        vol = player.volume + 10
+        if vol > 100:
+            return await ctx.send('最大音量に達しました', delete_after=5)
+        await player.set_volume(vol)
+        await player.invoke_controller()
+        return await ctx.send(f'音量を**{vol}%**に設定しました', delete_after=5)
+
+    @commands.command(hidden=True)
+    async def voldown(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        vol = player.volume - 10
+        if vol < 0:
+            return await ctx.send('既に音量は最小です', delete_after=5)
+        await player.set_volume(vol)
+        await player.invoke_controller()
+        return await ctx.send(f'音量を**{vol}%**に設定しました', delete_after=5)
+
+    @commands.command()
+    async def shuffle(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            return
+        if player.queue.qsize() < 1:
+            return await ctx.send('プレイリストに曲がありません')
+        await ctx.message.add_reaction('\N{TWISTED RIGHTWARDS ARROWS}')
+        random.shuffle(player.queue._queue)
+        await asyncio.sleep(3)
+        await ctx.message.remove_reaction('\N{TWISTED RIGHTWARDS ARROWS}', self.bot.user)
+
+    @commands.command(aliases=['eq'])
+    async def equalizer(self, ctx: commands.Context, *, equalizer: str):
+        player: Player = self.bot.wavelink.get_player(
+            guild_id=ctx.guild.id, cls=Player, context=ctx)
+        if not player.is_connected:
+            return
+        eqs = {'flat': wavelink.Equalizer.flat(),
+               'boost': wavelink.Equalizer.boost(),
+               'metal': wavelink.Equalizer.metal(),
+               'piano': wavelink.Equalizer.piano()}
+        eq = eqs.get(equalizer.lower(), None)
+        if not eq:
+            joined = ", ".join(eqs.keys())
+            return await ctx.send(f'イコライザーは以下の形式のみサポートしています\n\n**{joined}**')
+        await ctx.send(f'イコライザーを設定しました: **{equalizer}**', delete_after=15)
+        await player.set_eq(eq)
+
+    @commands.command(aliases=["queue"])
+    async def playlist(self, ctx: commands.Context):
+        player: Player = self.bot.wavelink.get_player(
+            guild_id=ctx.guild.id, cls=Player, context=ctx)
+        if not player.is_connected:
+            return
+        await player.queue.to_paginator().paginate(ctx)
+
+    def _song_to_embed(self, player, track: Track):
+        embed = discord.Embed(title='曲を追加しました', color=config.theme_color)
+        embed.description = f'```\n{track.title}\n```\n'
+        embed.set_thumbnail(url=track.thumb)
+        embed.add_field(name='Duration', value=str(
+            timedelta(milliseconds=int(track.length))))
+        embed.add_field(name='Requester', value=track.requester.mention)
+        embed.add_field(name='動画URL', value=f'[元動画にアクセス！]({track.uri})')
+        return embed
+
+    def _playlist_to_embed(self, tracks: wavelink.TrackPlaylist):
+        embed = discord.Embed(title='プレイリストを追加しました', color=config.theme_color)
+        embed.description = f'```\n{tracks.data["playlistInfo"]["name"]}\n```\n'
+        embed.add_field(name='総曲数', value=f'**`{len(tracks.tracks)}`**')
+        return embed
 
 
 def setup(bot):

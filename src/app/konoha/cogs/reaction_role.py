@@ -38,9 +38,9 @@ async def get_duration(coro, *args, **kwargs):
     return (end - start) * 1000, ret
 
 
-class RolePanel(commands.Cog):
+class ReactionRole(commands.Cog):
     '''
-    リアクションでロール付与を行うロールパネルを作成します
+    リアクションでロール付与を行うメッセージを作成します
     '''
     order = 20
 
@@ -64,13 +64,13 @@ class RolePanel(commands.Cog):
     @checks.has_perms(manage_roles=True)
     async def _new(self, ctx: commands.Context, *arg_tuple):
         '''
-        新たにRole Panelを作成します．
+        新たにReaction Role Panelを作成します．
         '''
         args: List[str] = list(arg_tuple)
         if len(args) == 0:
             return await self.bot.send_error(
                 ctx, '引数が不正です！',
-                'このコマンドは`Role Panelに載せる説明`の後に，`役職を表す絵文字`,`役職名`' +
+                'このコマンドは`Reaction Role Panelに載せる説明`の後に，`役職を表す絵文字`,`役職名`' +
                 'を対で指定する必要があります．\n\n' +
                 '例:\nkd:rp new どちらが好きですか? 🍄 @きのこ 🎋 @たけのこ'
             )
@@ -78,7 +78,7 @@ class RolePanel(commands.Cog):
         if len(args) % 2 != 0 or not args:
             return await self.bot.send_error(
                 ctx, '引数が不正です！',
-                'このコマンドは`Role Panelに載せる説明`の後に，`役職を表す絵文字`,`役職名`' +
+                'このコマンドは`Reaction Role Panelに載せる説明`の後に，`役職を表す絵文字`,`役職名`' +
                 'を対で指定する必要があります．\n\n' +
                 '例:\nkd:rp new どちらが好きですか? 🍄 @きのこ 🎋 @たけのこ'
             )
@@ -114,7 +114,7 @@ class RolePanel(commands.Cog):
                     )
                 role_table.append(
                     {'emoji': emoji, 'custom': False, 'role': role.id, 'original': _emoji})
-        embed = discord.Embed(title='Role Panel',
+        embed = discord.Embed(title='Reaction Role Panel',
                               description=description+'\n\n',
                               color=config.theme_color)
         panel_id = secrets.token_hex(12)[:12]
@@ -136,7 +136,7 @@ class RolePanel(commands.Cog):
     @checks.has_perms(manage_roles=True)
     async def simple(self, ctx: commands.Context, description: Union[discord.Role, str], *roles: commands.Greedy[discord.Role]):
         '''
-        A, B, C ... が選択肢のRole Panelを新たに作成します
+        A, B, C ... が選択肢のReaction Role Panelを新たに作成します
         '''
         if isinstance(description, str):
             args = [description] + \
@@ -153,7 +153,7 @@ class RolePanel(commands.Cog):
     @checks.has_perms(manage_roles=True)
     async def num(self, ctx: commands.Context, description: Union[discord.Role, str], *roles: commands.Greedy[discord.Role]):
         '''
-        1, 2, 3 ... が選択肢のRole Panelを新たに作成します
+        1, 2, 3 ... が選択肢のReaction Role Panelを新たに作成します
         '''
         if isinstance(description, str):
             l = len(roles)
@@ -173,11 +173,11 @@ class RolePanel(commands.Cog):
     @role_panel.command(name='list')
     async def _list(self, ctx: commands.Context):
         '''
-        作成したRole Panelの一覧を表示します
+        作成したReaction Role Panelの一覧を表示します
         '''
         rps = await q.RolePanel.search(self.bot, guild=ctx.guild.id)
         paginator = EmbedPaginator(
-            title="Role Panel List", footer="Page $p / $P")
+            title="Reaction Role Panel List", footer="Page $p / $P")
         paginator.new_page()
         for rp in rps:
             user = ctx.guild.get_member(int(rp.user))
@@ -202,11 +202,11 @@ class RolePanel(commands.Cog):
     @role_panel.command()
     async def delete(self, ctx: commands.Context, id: str):
         '''
-        指定したIDのRole Panelを削除します
+        指定したIDのReaction Role Panelを削除します
         '''
         rps = await q.RolePanel.search(self.bot, id=id)
         if not rps:
-            return await ctx.send('指定したIDのRole Panelはありません', delete_after=3.)
+            return await ctx.send('指定したIDのReaction Role Panelはありません', delete_after=3.)
         rp = rps[0]
         channel = ctx.guild.get_channel(int(rp.channel))
         try:
@@ -217,7 +217,7 @@ class RolePanel(commands.Cog):
             await message.delete()
         except discord.NotFound:
             await q.RolePanel(self.bot, rp.message).delete(),
-        await ctx.send('指定したIDのRole Panelを削除しました', delete_after=3.)
+        await ctx.send('指定したIDのReaction Role Panelを削除しました', delete_after=3.)
 
     @delete.error
     async def on_delete_error(self, ctx: commands.Context, error):
@@ -225,17 +225,17 @@ class RolePanel(commands.Cog):
             ctx.handled = True
             await self.bot.send_error(
                 ctx, "引数が足りません！",
-                "削除するロールパネルのIDを指定してください"
+                "削除するメッセージのIDを指定してください"
             )
 
     @role_panel.command()
     async def add(self, ctx: commands.Context, id: str, emoji: str, role: discord.Role):
         '''
-        指定したIDのRole Panelに新たに選択肢を追加します
+        指定したIDのReaction Role Panelに新たに選択肢を追加します
         '''
         rps = await q.RolePanel.search(self.bot, id=id)
         if not rps:
-            return await ctx.send('指定したIDのRole Panelはありません', delete_after=3.)
+            return await ctx.send('指定したIDのReaction Role Panelはありません', delete_after=3.)
         rp = rps[0]
         rp_payload = json.loads(rp.payload)
         channel = ctx.guild.get_channel(int(rp.channel))
@@ -244,7 +244,7 @@ class RolePanel(commands.Cog):
         except discord.NotFound:
             return await self.bot.send_error(
                 ctx, "メッセージは既に削除されています",
-                "ロールパネルメッセージが削除されてしまっているようです"
+                "ロールを付与するメッセージが削除されてしまっているようです"
             )
         embed = message.embeds[0]
         try:
@@ -286,14 +286,24 @@ class RolePanel(commands.Cog):
         await asyncio.sleep(2)
         await ctx.message.remove_reaction('✅', ctx.bot.user)
 
+    @add.error
+    async def on_add_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "引数が足りません！",
+                "絵文字を追加するReaction Role PanelのIDと，絵文字とロールの対を" +
+                "引数として与えてください"
+            )
+
     @role_panel.command()
     async def remove(self, ctx: commands.Context, id: str, emoji: str):
         '''
-        指定したIDのRole Panelから指定した絵文字の選択肢を削除します
+        指定したIDのReaction Role Panelから指定した絵文字の選択肢を削除します
         '''
         rps = await q.RolePanel.search(self.bot, id=id)
         if not rps:
-            return await ctx.send('指定したIDのRole Panelはありません', delete_after=3.)
+            return await ctx.send('指定したIDのReaction Role Panelはありません', delete_after=3.)
         rp = rps[0]
         rp_payload = json.loads(rp.payload)
         channel = ctx.guild.get_channel(int(rp.channel))
@@ -302,7 +312,7 @@ class RolePanel(commands.Cog):
         except discord.NotFound:
             return await self.bot.send_error(
                 ctx, "メッセージは既に削除されています",
-                "ロールパネルメッセージが削除されてしまっているようです"
+                "ロールを付与するメッセージが削除されてしまっているようです"
             )
         embed = message.embeds[0]
         desc = demojize(embed.description)
@@ -347,7 +357,7 @@ class RolePanel(commands.Cog):
         if not check:
             return await self.bot.send_error(
                 ctx, '引数が不正です！',
-                f'{emoji}は指定したRole Panelに登録されていない絵文字です'
+                f'{emoji}は指定したReaction Role Panelに登録されていない絵文字です'
             )
         ptn = str(_orig) + r'.*?\n'
         embed.description = emojize(re.sub(ptn, '', desc))
@@ -360,6 +370,16 @@ class RolePanel(commands.Cog):
         )
         await asyncio.sleep(2)
         await ctx.message.remove_reaction('✅', ctx.bot.user)
+
+    @add.error
+    async def on_remove_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "引数が足りません！",
+                "絵文字を削除するReaction Role PanelのIDと，対象の絵文字を" +
+                "引数として与えてください"
+            )
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
@@ -402,4 +422,4 @@ class RolePanel(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(RolePanel(bot))
+    bot.add_cog(ReactionRole(bot))

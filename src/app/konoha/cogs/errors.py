@@ -41,6 +41,10 @@ class Errors(commands.Cog):
             return
         if isinstance(error, commands.errors.CommandNotFound):
             return
+        if isinstance(error, commands.CommandInvokeError):
+            original = error.original
+            if isinstance(error, discord.NotFound):
+                return
         if isinstance(error, commands.errors.NoPrivateMessage):
             return await self.bot.send_error(
                 ctx, "DM上で実行はできません",

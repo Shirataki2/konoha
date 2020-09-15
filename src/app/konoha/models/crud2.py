@@ -378,6 +378,13 @@ class Timer:
         await self.bot.execute(q, verbose)
         return self
 
+    @staticmethod
+    async def search(bot, verbose=1, **kwargs):
+        q = models.timer.select().where(
+            and_(*[v == getattr(models.timer.c, k) for k, v in kwargs.items()]))
+        result = await bot.execute(q, verbose)
+        return await result.fetchall()
+
 
 class Vocab:
     def __init__(self, bot, name, **kwargs):

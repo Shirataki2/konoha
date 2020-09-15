@@ -87,7 +87,13 @@ class Bot(commands.Cog):
 
         このURL先にアクセスするとBotをあなたのサーバーに招待する画面へと移行します．
         '''
-        return await ctx.send(f"{config.oauth2_url}")
+        perms = discord.Permissions(permissions=808840279)
+        return await ctx.send(
+            discord.utils.oauth_url(
+                ctx.bot.user.id,
+                permissions=perms
+            )
+        )
 
     @commands.command(aliases=["server"])
     @commands.guild_only()

@@ -38,7 +38,7 @@ def extract(argument: str):
         w = 0
     try:
         d = int(n[0]) if (n := days.findall(argument)) else 0
-        if y != 0:
+        if d != 0:
             r += f'{d}日'
     except:
         d = 0

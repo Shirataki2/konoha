@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "24d79bb3740f65ec7c214e970290f76cfb1f644cc28711c65b9c0215c71c5442"
+            "sha256": "ed8f152e6e6267e21f15cb13f59116da585ff309c37e5f11c887e7e48f05abec"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,10 @@
         ]
     },
     "default": {
+        "84caae8": {
+            "git": "https://github.com/Rapptz/discord-ext-menus",
+            "ref": "84caae8038d0d3adc860957ccef05baeec2e2dd8"
+        },
         "aiofiles": {
             "hashes": [
                 "sha256:377fdf7815cc611870c59cbd07b68b180841d2a2b79812d8c218be02448c2acb",
@@ -44,17 +48,18 @@
         "aiomysql": {
             "git": "https://github.com/aio-libs/aiomysql",
             "hashes": [
-                "sha256:5fd798481f16625b424eec765c56d712ac78a51f3bd0175a3de94107aae43307",
-                "sha256:d89ce25d44dadb43cf2d9e4603bd67b7a0ad12d5e67208de013629ba648df2ba"
+                "sha256:d89ce25d44dadb43cf2d9e4603bd67b7a0ad12d5e67208de013629ba648df2ba",
+                "sha256:5fd798481f16625b424eec765c56d712ac78a51f3bd0175a3de94107aae43307"
             ],
             "ref": "d842ec3f95614a2042a9107d7b65edfcf661d614"
         },
         "alembic": {
             "hashes": [
-                "sha256:035ab00497217628bf5d0be82d664d8713ab13d37b630084da8e1f98facf4dbf"
+                "sha256:4e02ed2aa796bd179965041afa092c55b51fb077de19d61835673cc80672c01c",
+                "sha256:5334f32314fb2a56d86b4c4dd1ae34b08c03cae4cb888bc699942104d66bc245"
             ],
             "index": "pypi",
-            "version": "==1.4.2"
+            "version": "==1.4.3"
         },
         "aniso8601": {
             "hashes": [
@@ -902,6 +907,14 @@
             "markers": "sys_platform != 'win32' and sys_platform != 'cygwin' and platform_python_implementation != 'PyPy'",
             "version": "==0.14.0"
         },
+        "wavelink": {
+            "hashes": [
+                "sha256:31e01e5e85683c29b79cf0093fda1bcd31d845077c9db1e05bd657e82af5ced6",
+                "sha256:88ff1cd1e454fe353dca1b42b1b17e27822d9010673107ac9e00e3ec6480e833"
+            ],
+            "index": "pypi",
+            "version": "==0.9.6"
+        },
         "websockets": {
             "hashes": [
                 "sha256:0e4fb4de42701340bd2353bb2eee45314651caa6ccee80dbd5f5d5978888fed5",
@@ -955,11 +968,11 @@
         },
         "youtube-dl": {
             "hashes": [
-                "sha256:ddfbc48793a24f58aba94e61b969003506ab259757b6cb7cb64eb37c1ca8415c",
-                "sha256:eced5195e3264c36d2d62610bf235f75b592d5bb2f8ac424fd8da54ee426cd75"
+                "sha256:118094942d762287db39664c4e8198abcdde68581a2214e96d1ec58f2753bd82",
+                "sha256:fdd7e328c6f23e83f331490293dc8fb4d4ca07eaf22b895d51021541abcc4236"
             ],
             "index": "pypi",
-            "version": "==2020.9.6"
+            "version": "==2020.9.14"
         }
     },
     "develop": {

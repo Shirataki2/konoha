@@ -19,6 +19,7 @@ class Config:
     log_channel: str = ""
     deepl_apikey: str = ""
     session_key: str = ""
+    lava_password: str = ""
 
     def __init__(self, ini_file_path: str) -> None:
         parser = ConfigParser()

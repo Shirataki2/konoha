@@ -52,6 +52,10 @@ aio_logger = logging.getLogger('asyncio')
 aio_logger.setLevel(logging.DEBUG)
 aio_logger.addHandler(handler)
 
+mpl_logger = logging.getLogger('matplotlib')
+mpl_logger.setLevel(logging.CRITICAL)
+mpl_logger.addHandler(handler)
+
 
 def get_module_logger(modname):
     logger = logging.getLogger(modname)
