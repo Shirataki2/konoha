@@ -19,7 +19,7 @@ description: 001 - ユーモラスなコマンド群です
 </pre>
 
 
-のようなテキストを作成します．`text`に文字を入れるとその文字を装飾します．
+のようなテキストを作成します．何も入れない場合は「突然の死」を表示し，`text`に文字を入れるとその文字を装飾します．
 
 一行あたり25文字以内にしてください．
 
@@ -27,17 +27,28 @@ description: 001 - ユーモラスなコマンド群です
 </command>
 
 <command 
-  name="shellgei"
+  name="run"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
-  :usages="['k:shellgei echo Hello', 'k:shellgei \n```sh\nyes 高須クリニック\n```']"
-  rate="10分あたり20回まで">
+  :usages="['k:run shell echo Hello', 'k:run shell \n```sh\nyes 高須クリニック\n```']"
+  rate="1分あたり5回まで">
 <div>
 
-  `k:shellgei <source>`
+  `k:run <language> <source>`
 
-シェルスクリプトを実行しちゃう危険なコマンド
+いろんなスクリプトを実行しちゃう危険なコマンド
 
-基本的な仕様はシェル芸Botと同様です．
+対応言語は
+
+- shellscript
+- python
+- ruby
+- c++
+- haskell
+- javascript
+
+です．
+
+基本的な仕様はツイッター上のシェル芸Botと同様です．
 
 1. ネットワークインターフェースはローカルループバックのみ
 2. 最大実行時間は20秒
@@ -46,7 +57,8 @@ description: 001 - ユーモラスなコマンド群です
 5. `/images`フォルダ下に画像を保存した場合最大4枚まで送信される
 6. 5MB以上の大きさのファイルは作成不可
 7. メモリは256MBまで利用可能
-8. シェル芸の[Dockerコンテナ](https://hub.docker.com/r/theoldmoon0602/shellgeibot)上で動かされます．なので，`rm -rf /`とかは効かないようになってるけど脆弱性は突かないであげてね！
+8. Dockerコンテナ上で動かされるので，`rm -rf /`とかは効かないようになっています．
+9. 脆弱性があったら執拗に攻撃するのではなく開発者に知らせてください！！！！！
 
 </div>
 </command>

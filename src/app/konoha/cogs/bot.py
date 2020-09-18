@@ -111,10 +111,10 @@ class Bot(commands.Cog):
             list(filter(lambda m: m.status == discord.Status.dnd, members)))
         offlines = len(
             list(filter(lambda m: m.status == discord.Status.offline, members)))
-        emo_on = self.bot.get_emoji(706276692465025156)
-        emo_id = self.bot.get_emoji(706276692678934608)
-        emo_dn = self.bot.get_emoji(706276692674609192)
-        emo_of = self.bot.get_emoji(706276692662157333)
+        emo_on = self.bot.custom_emojis.online
+        emo_id = self.bot.custom_emojis.idle
+        emo_dn = self.bot.custom_emojis.dnd
+        emo_of = self.bot.custom_emojis.offline
         embed = discord.Embed(title=f'{guild.name}', colour=0x4060e3)
         embed.set_thumbnail(url=str(guild.icon_url))
         embed.add_field(name='地域', value=f'{guild.region}')

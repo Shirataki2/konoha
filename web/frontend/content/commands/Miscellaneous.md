@@ -11,7 +11,7 @@ description: 111 -
 
   `k:echo <text>`
 
-オウム返しをします．`@everyone`等のメンションは行えません．
+オウム返しをします．
 
 </div>
 </command>

@@ -225,6 +225,16 @@ class Reminder(commands.Cog):
         else:
             await ctx.send("指定したIDのリマインダーが見つかりません")
 
+    @delete.error
+    async def on_delete_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "引数が不足しています！",
+                "このコマンドを動かすには引数としてリマインダーのIDを入力してください\n\n" +
+                "IDは`reminder list`コマンドで調べることができます．"
+            )
+
     @tasks.loop(minutes=1)
     async def notification_task(self):
         try:

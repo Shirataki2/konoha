@@ -79,6 +79,14 @@ class AppNavBar extends Vue {
       section: false,
     },
     {
+      title: 'プライバシーポリシー',
+      icon: 'mdi-card-account-details',
+      to: '/support/privacy',
+      needLogin: false,
+      needLogout: false,
+      section: false,
+    },
+    {
       title: 'ログアウト',
       icon: 'mdi-logout',
       to: '/logout',

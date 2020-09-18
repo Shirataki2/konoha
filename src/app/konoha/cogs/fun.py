@@ -80,23 +80,46 @@ class Fun(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.cooldown(20, 600, commands.BucketType.guild)
-    async def shellgei(self, ctx: commands.Context, *, code: str):
+    @commands.cooldown(5, 60, commands.BucketType.guild)
+    async def run(self, ctx: commands.Context, lang, *, code: str):
         '''
-        シェル芸を走らせます
+        ソースコードを走らせます
 
         Twitterのシェル芸Botと同様，ファイルを送信したら/mediaにファイルが置かれ，
 
         画像を/imagesに保存すると帰ってきます
         '''
+        if lang in ['py', 'python']:
+            l = 'python'
+        elif lang in ['c', 'c++', 'cpp']:
+            l = 'cpp'
+        elif lang in ['js', 'javascript']:
+            l = 'javascript'
+        elif lang in ['hs', 'haskell']:
+            l = 'haskell'
+        elif lang in ['rb', 'ruby']:
+            l = 'ruby'
+        elif lang in ['sh', 'bash', 'zsh', 'shell']:
+            l = 'shell'
+        else:
+            return await self.bot.send_error(
+                ctx, '引数が不正です！',
+                '第一引数には言語名を入れてください!\n\n' +
+                '対応言語: ' +
+                ','.join(['python', 'c++', 'javascript',
+                          'ruby', 'haskell', 'shell'])
+            )
         ptn: Pattern[str] = re.compile(r'```(.*)?\n((.|\s)*)?```')
         codes = ptn.findall(code)
         if len(codes) == 1:
             _code = codes[0]
             if len(_code) == 3:
                 code = _code[1]
+        if code[0] == '`' and code[-1] == '`':
+            code = code[1:-1]
         form = aiohttp.FormData()
         form.add_field('source', code)
+        form.add_field('language', l)
         if ctx.message.attachments:
             fs = ctx.message.attachments[:4]
             for i, f in enumerate(fs):
@@ -135,7 +158,7 @@ class Fun(commands.Cog):
             await ctx.send(files=files)
         await ctx.send(f"`終了コード: {data['exit_code']}`\n`実行時間: {data['exec_sec']}`")
 
-    @shellgei.error
+    @run.error
     async def on_shellgei_error(self, ctx: commands.Context, error):
         if isinstance(error, commands.CommandOnCooldown):
             ctx.handled = True
@@ -144,7 +167,8 @@ class Fun(commands.Cog):
             ctx.handled = True
             await self.bot.send_error(
                 ctx, "引数が不足しています！",
-                "`shellgei`を動かすには引数としてシェルスクリプトのソースコードを入力してください"
+                "このコマンドを動かすには引数として言語とソースコードを入力してください\n\n" +
+                "例: `run python print('Hello')`"
             )
 
     @commands.command()
@@ -250,6 +274,12 @@ class Fun(commands.Cog):
         if isinstance(error, commands.CommandOnCooldown):
             ctx.handled = True
             await self.bot.send_cooldown_error(ctx, error, 5, 1)
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "引数が不足しています！",
+                "このコマンドを動かすには最低限引数として絵文字化したい文字列を入力してください"
+            )
 
 
 def setup(bot):

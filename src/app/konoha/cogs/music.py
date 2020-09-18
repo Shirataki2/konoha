@@ -366,6 +366,11 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(aliases=['join'])
     async def connect(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
+        '''
+        あなたが接続してるボイスチャンネルに参加します
+
+        引数にボイスチャンネルを指定した場合はそちらに参加します
+        '''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx)
         if player.is_connected:
@@ -377,6 +382,9 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def play(self, ctx: commands.Context, *, query: str):
+        '''
+        URLや曲名から検索し曲をプレイリストに追加し，再生します
+        '''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -402,6 +410,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def pause(self, ctx: commands.Context):
+        '''再生中の曲を一時停止します'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -420,6 +429,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def resume(self, ctx: commands.Context):
+        '''一時停止中の曲を再度再生します'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -438,6 +448,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def skip(self, ctx: commands.Context):
+        '''再生中の曲を飛ばし，次の曲を再生します'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -456,6 +467,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def stop(self, ctx: commands.Context):
+        '''再生を停止し，Botをボイスチャンネルから退出させます'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -474,6 +486,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def loop(self, ctx: commands.Context):
+        '''プレイリスト中の曲を連続再生します'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -484,6 +497,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def loop_single_track(self, ctx: commands.Context):
+        '''再生中の曲のみをループさせます'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -494,6 +508,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def remove(self, ctx: commands.Context, index: int):
+        '''プレイリストの番号を指定し，その曲をプレイリストから削除させます'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -512,6 +527,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(aliases=["vol"])
     async def volume(self, ctx: commands.Context, *, vol: int):
+        '''曲のボリュームを0-100 (%)に変更させます'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -553,6 +569,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command()
     async def shuffle(self, ctx: commands.Context):
+        '''プレイリスト中の曲をシャッフルします'''
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx
         )
@@ -567,6 +584,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(aliases=['eq'])
     async def equalizer(self, ctx: commands.Context, *, equalizer: str):
+        '''イコライザを設定します． (対応イコライザ: Flat, Boost, Metal, Piano)'''
         player: Player = self.bot.wavelink.get_player(
             guild_id=ctx.guild.id, cls=Player, context=ctx)
         if not player.is_connected:
@@ -584,6 +602,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @commands.command(aliases=["queue"])
     async def playlist(self, ctx: commands.Context):
+        '''プレイリストを表示します'''
         player: Player = self.bot.wavelink.get_player(
             guild_id=ctx.guild.id, cls=Player, context=ctx)
         if not player.is_connected:
