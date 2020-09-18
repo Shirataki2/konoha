@@ -38,9 +38,15 @@ class Images(commands.Cog):
             async with aiohttp.ClientSession() as session:
                 await q.Hook(self.bot, ctx.guild.id, channel_id).set(hookurl=hook.hookurl, tags=tags)
                 await ctx.send(f"Tagを{hook.tags}から{tags}に変更しました")
-                webhook = discord.Webhook.from_url(
-                    hook.hookurl, adapter=discord.AsyncWebhookAdapter(session))
-                return await webhook.send(f"Webhookの変更が完了しました")
+                try:
+                    webhook = discord.Webhook.from_url(
+                        hook.hookurl, adapter=discord.AsyncWebhookAdapter(session))
+                    return await webhook.send(f"Webhookの変更が完了しました")
+                except:
+                    webhook2: discord.Webhook = await ctx.channel.create_webhook(name="Autobooru")
+                    await q.Hook(self.bot, ctx.guild.id, channel_id).set(hookurl=webhook2.url, tags=tags)
+                    await ctx.send(f"Danbooru Webhookを登録しました\nTag: {tags}")
+                    return await webhook2.send(f"Webhookの登録が完了しました")
         else:
             webhook_: discord.Webhook = await ctx.channel.create_webhook(name="Autobooru")
             await q.Hook.create(self.bot, ctx.guild.id, channel_id, webhook_.url, tags)
@@ -87,7 +93,9 @@ class Images(commands.Cog):
                     )
                     await webhook.send(embed=embed)
         except Exception as e:
-            pass
+            logger.warn("Webhook送信中にエラーが発生しました")
+            logger.warn(e.__class__.__name__)
+            logger.warn(str(e))
 
 
 def setup(bot):

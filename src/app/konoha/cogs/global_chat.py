@@ -91,7 +91,7 @@ class GlobalChat(commands.Cog):
         if message.author.bot or message.guild is None:
             return
         guild = await q.Guild(self.bot, message.guild.id).get(verbose=2)
-        if int(guild.gc_channel) != message.channel.id:
+        if guild.gc_channel != str(message.channel.id):
             return
         guilds = [
             g
@@ -112,15 +112,18 @@ class GlobalChat(commands.Cog):
 
 async def send_global_message(guild, message):
     async with aiohttp.ClientSession() as session:
-        hook = discord.Webhook.from_url(
-            guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
-        await hook.send(
-            message.content,
-            username=message.author.name,
-            avatar_url=message.author.avatar_url_as(format="png"),
-            allowed_mentions=discord.AllowedMentions(
-                everyone=False, users=False, roles=False)
-        )
+        try:
+            hook = discord.Webhook.from_url(
+                guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
+            await hook.send(
+                message.content,
+                username=message.author.name,
+                avatar_url=message.author.avatar_url_as(format="png"),
+                allowed_mentions=discord.AllowedMentions(
+                    everyone=False, users=False, roles=False)
+            )
+        except:
+            pass
 
 
 def setup(bot):
