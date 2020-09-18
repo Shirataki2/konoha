@@ -42,5 +42,11 @@ class Test(commands.Cog):
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
 
+    @commands.command()
+    async def factor(self, ctx: commands.Context, num: int):
+        while True:
+            1
+
+
 def setup(bot):
     bot.add_cog(Test(bot))

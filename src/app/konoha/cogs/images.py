@@ -87,9 +87,7 @@ class Images(commands.Cog):
                     )
                     await webhook.send(embed=embed)
         except Exception as e:
-            logger.warn("Webhook送信中にエラーが発生しました")
-            logger.warn(e.__class__.__name__)
-            logger.warn(str(e))
+            pass
 
 
 def setup(bot):

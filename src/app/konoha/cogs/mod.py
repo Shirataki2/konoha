@@ -71,7 +71,6 @@ class Mod(commands.Cog):
         '''
         ユーザーのBANを解除します
         '''
-        users = await self.mod_check(ctx, users)
         if users is None:
             return await self.bot.send_error(
                 ctx, "ユーザーが指定されていません",

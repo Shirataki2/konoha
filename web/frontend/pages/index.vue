@@ -1,11 +1,12 @@
 <template>
-  <div>
-    <h1>Hi</h1>
-    <h1>Hi</h1>
-    <h1>Hi</h1>
-    <h1>Hi</h1>
-    <h1>Hi</h1>
-  </div>
+  <v-container>
+    <v-row>
+      <v-col cols="12">
+        <h2>よおこそ</h2>
+        <p>誠意制作中です．トップページのデザインが一番難しいね．</p>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script lang="ts">

@@ -18,11 +18,9 @@ logger = get_module_logger(__name__)
 
 class GlobalChat(commands.Cog):
     '''
-    グローバルチャットは他のサーバーのメンバーと疑似的に会話ができる機能です．
+    他のサーバーのメンバーと疑似的に会話ができるグローバルチャットに関するコマンドです．
 
     他のサーバーのユーザーからの通知には[ボット]と名前につきますが相手はボットではなくユーザーです
-
-    失礼な言動等を見かけた場合には`{prefix}gc report (ユーザー)`で通報してください
     '''
     order = 3
 
@@ -88,76 +86,6 @@ class GlobalChat(commands.Cog):
                 await ctx.send(f"グローバルチャットサービスの利用を終了しました")
                 await hook.delete()
 
-    @gc.command()
-    async def report(self, ctx: commands.Context, user: discord.Member):
-        '''
-        グローバルチャットにて不審な行動を起こした方がいた際の通報機能です．
-
-        通報の際は必ず理由を書くようにしてください．
-
-        理由にはスクリーンショットのURL，メッセージのURL，メッセージIDを書くことで特定しやすくなります．
-        '''
-        if user is None:
-            return await self.bot.send_error(
-                ctx, "ユーザーが見つかりません",
-                "名前や`@`付きでのメンション，またはIDなどのユーザーに関する情報を引数に与えてください"
-            )
-        await ctx.send(
-            (
-                "通報理由を教えてください:\n\n"
-                "@\u200Beveryoneの連発,誹謗中傷 など\n```\n"
-                "キャンセルの場合は cancel と送信してください\n\n"
-                "スクリーンショットのURL，メッセージのURL，メッセージIDを書くことで特定しやすくなります．\n"
-                "```"
-            )
-        )
-
-        def user_check(message: discord.Message):
-            return all([
-                message.author == ctx.author
-            ])
-        try:
-            message: discord.Message = await self.bot.wait_for("message", check=user_check, timeout=600)
-        except asyncio.TimeoutError:
-            return await ctx.send("メッセージの送信がしばらくないため受付を終了します")
-        if message.content == "cancel":
-            return await ctx.send("通報をキャンセルしました")
-        embed = discord.Embed(title="通報内容の確認", color=0xffff00)
-        embed.description = f"{user.mention} を以下の理由で通報します．\nよろしいですか？\n\n{message.content}"
-        confirm_message: discord.Message = await ctx.send(embed=embed)
-
-        def reaction_check(reaction: discord.Reaction, user: discord.Member):
-            return all([
-                reaction.emoji in ("✅", "❎"),
-                ctx.author == user,
-                reaction.message.id == confirm_message.id
-            ])
-        for emoji in ("✅", "❎"):
-            await confirm_message.add_reaction(emoji)
-        try:
-            reaction, _ = await self.bot.wait_for("reaction_add", check=reaction_check, timeout=600)
-        except asyncio.TimeoutError:
-            return await ctx.send("送信の確認がないため通報の受付を終了します")
-        if reaction.emoji == "✅":
-            channel: discord.Channel = await self.bot.fetch_channel(config.log_channel)
-            embed = discord.Embed(title="通報ログ", color=0xff0000)
-            embed.description = f"{message.content}"
-            embed.add_field(name="通報者", value=ctx.author.mention)
-            embed.add_field(name="通報対象", value=user.mention)
-            try:
-                embed.add_field(name="サーバー", value=ctx.guild.id)
-            except:
-                embed.add_field(name="サーバー", value="不明")
-            await channel.send(embed=embed)
-            try:
-                await confirm_message.clear_reactions()
-            except:
-                pass
-            await ctx.send("通報が完了しました")
-        if reaction.emoji == "❎":
-            await confirm_message.clear_reactions()
-            return await ctx.send("通報をキャンセルしました")
-
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot or message.guild is None:
@@ -180,15 +108,6 @@ class GlobalChat(commands.Cog):
             await message.clear_reactions()
         except:
             pass
-
-    @report.error
-    async def on_report_error(self, ctx: commands.Context, error: Exception):
-        if isinstance(error, commands.errors.MissingRequiredArgument):
-            ctx.handled = True
-            await self.bot.send_error(
-                ctx, "引数が足りません",
-                f"`{ctx.command.name}`の引数として通報対象のユーザーを指定してください"
-            )
 
 
 async def send_global_message(guild, message):
