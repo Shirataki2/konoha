@@ -3,7 +3,7 @@ class CustomEmoji:
     IDLE = 756591503673000016
     DND = 756591503673000016
     OFFLINE = 756591503673000016
-    LOADING = 756591779612065914
+    LOADING = 756812621730021428
 
     def __init__(self, bot):
         self.bot = bot
