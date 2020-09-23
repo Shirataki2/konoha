@@ -55,6 +55,13 @@ class Konoha(BotBase):
         embed.set_author(name="Konoha Bot", icon_url=self.user.avatar_url)
         await ctx.send(embed=embed)
 
+    async def send_warning(self, ctx: commands.Context, title: str, description: str = None):
+        embed = discord.Embed(
+            title=f'**{title}**', description=description, color=0xfec714
+        )
+        embed.set_author(name="Konoha Bot - Warning", icon_url=self.user.avatar_url)
+        await ctx.send(embed=embed)
+
     async def send_error(self, ctx: commands.Context, title: str, description: str = None):
         embed = discord.Embed(
             title=f'**{title}**', description=description, color=0xff0000

@@ -1,7 +1,7 @@
 <template>
   <div>
     <p class="text-center mt-8">
-      リダイレクト中...
+      作成中です
     </p>
   </div>
 </template>
@@ -14,7 +14,7 @@ import { Vue, Component } from 'vue-property-decorator'
 })
 class Login extends Vue {
   mounted() {
-    location.href = process.env.login_url
+    // location.href = process.env.login_url
   }
 }
 export default Login

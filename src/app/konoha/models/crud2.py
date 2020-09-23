@@ -539,3 +539,53 @@ class RolePanel:
             and_(*[v == getattr(models.rolepanel.c, k) for k, v in kwargs.items()]))
         result = await bot.execute(q, verbose)
         return await result.fetchall()
+
+
+class JoinRole:
+    def __init__(self, bot, guild_id, **kwargs):
+        self.guild_id = str(guild_id)
+        self.bot = bot
+
+    async def get(self, verbose=1):
+        q = models.join_role.select().where(
+            self.guild_id == models.join_role.c.guild
+        )
+        result = await self.bot.execute(q, verbose)
+        return await result.fetchall()
+
+    @classmethod
+    async def create(cls, bot, guild_id, role_id, verbose=1, **kwargs):
+        q = models.join_role.insert(None).values(
+            guild=guild_id, role=role_id)
+        await bot.execute(q, verbose)
+        return cls(bot, guild_id)
+
+    @classmethod
+    async def remove(cls, bot, guild_id, role_id, verbose=1, **kwargs):
+        q = models.join_role.delete(None).where(and_(
+            models.join_role.c.guild == guild_id,
+            models.join_role.c.role == role_id
+        ))
+        await bot.execute(q, verbose)
+        return cls(bot, guild_id)
+
+    async def set(self, verbose=1, **kwargs):
+        q = models.join_role.update(None).where(
+            self.guild_id == models.join_role.c.guild
+        ).values(**kwargs)
+        await self.bot.execute(q, verbose)
+        return self
+
+    async def delete(self, verbose=1):
+        q = models.join_role.delete(None).where(
+            self.guild_id == models.join_role.c.guild
+        )
+        await self.bot.execute(q, verbose)
+        return self
+
+    @staticmethod
+    async def search(bot, verbose=1, **kwargs):
+        q = models.join_role.select().where(
+            and_(*[v == getattr(models.join_role.c, k) for k, v in kwargs.items()]))
+        result = await bot.execute(q, verbose)
+        return await result.fetchall()

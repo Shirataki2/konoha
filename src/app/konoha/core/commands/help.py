@@ -18,16 +18,16 @@ class CustomHelpCommand(commands.HelpCommand):
             if not command.signature and not command.parent:
                 return f"`{self.clean_prefix}{command.name}`"
             if command.signature and not command.parent:
-                return f"`{self.clean_prefix}{command.name}` `{command.signature}`"
+                return f"`{self.clean_prefix}{command.name} {command.signature}`"
             if not command.signature and command.parent:
-                return f"`    {command.name}`"
+                return f"`{self.clean_prefix}{command.parent} {command.name}`"
             if command.signature and command.parent:
-                return f"`    {command.name}` `{command.signature}`"
+                return f"`{self.clean_prefix}{command.parent} {command.name}` `{command.signature}`"
         else:
             if not command.signature and not command.parent:
                 return f"`{self.clean_prefix}{command.name}`"
             if command.signature and not command.parent:
-                return f"`{self.clean_prefix}{command.name}` `{command.signature}`"
+                return f"`{self.clean_prefix}{command.name} {command.signature}`"
             if not command.signature and command.parent:
                 return f"`{self.clean_prefix}{command.parent} {command.name}`"
             if command.signature and command.parent:
@@ -124,8 +124,9 @@ class CustomHelpCommand(commands.HelpCommand):
         paginator.content[0]["description"] = cog.description.format(
             prefix=self.clean_prefix)
         prev = None
+        prev2 = None
         for c in commands:
-            if c.name == prev:
+            if c.name == prev and c.parent == prev2:
                 continue
             try:
                 if await c.can_run(ctx) and not c.hidden:
@@ -140,6 +141,7 @@ class CustomHelpCommand(commands.HelpCommand):
             except:
                 pass
             prev = c.name
+            prev2 = c.parent
         await paginator.paginate(ctx)
 
     async def send_command_help(self, command: commands.Command):

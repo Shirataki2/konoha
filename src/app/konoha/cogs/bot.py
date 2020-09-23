@@ -87,7 +87,7 @@ class Bot(commands.Cog):
 
         このURL先にアクセスするとBotをあなたのサーバーに招待する画面へと移行します．
         '''
-        perms = discord.Permissions(permissions=808840279)
+        perms = discord.Permissions(permissions=808840278)
         return await ctx.send(
             discord.utils.oauth_url(
                 ctx.bot.user.id,

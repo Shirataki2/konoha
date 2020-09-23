@@ -138,3 +138,10 @@ rolepanel = Table(
     Column("user", String(24), nullable=False),
     Column("payload", String(1000), nullable=False),
 )
+
+join_role = Table(
+    "join_role",
+    meta,
+    Column("guild", String(24), nullable=False),
+    Column("role", String(24), unique=True, nullable=False),
+)

@@ -99,6 +99,8 @@ class Fun(commands.Cog):
             l = 'haskell'
         elif lang in ['rb', 'ruby']:
             l = 'ruby'
+        elif lang in ['rs', 'rust']:
+            l = 'rust'
         elif lang in ['sh', 'bash', 'zsh', 'shell']:
             l = 'shell'
         else:

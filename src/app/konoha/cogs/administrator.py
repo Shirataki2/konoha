@@ -262,8 +262,8 @@ class Administrator(commands.Cog):
         await paginator.paginate(ctx)
 
     @commands.is_owner()
-    @commands.command()
-    async def do(self, ctx: commands.Context, *, body: str):
+    @commands.command(name='eval')
+    async def _eval(self, ctx: commands.Context, *, body: str):
         '''
         任意のコマンドを実行します
         '''
