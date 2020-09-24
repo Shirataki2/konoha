@@ -42,10 +42,9 @@ class Test(commands.Cog):
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
 
-    @commands.command()
-    async def factor(self, ctx: commands.Context, num: int):
-        while True:
-            1
+    @commands.command(hidden=True)
+    async def tmp(self, ctx: commands.Context, num: int):
+        discord.VoiceChannel.connect()
 
 
 def setup(bot):

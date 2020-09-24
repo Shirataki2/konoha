@@ -19,6 +19,7 @@ from konoha.core.bot.konoha import Konoha
 from konoha.core.log.logger import get_module_logger
 from konoha.core.utils.pagination import EmbedPaginator
 from konoha.extensions.voice_client import ExtendedVoiceClient
+import itertools
 
 logger = get_module_logger(__name__)
 
@@ -42,6 +43,18 @@ class Track(wavelink.Track):
 class Queue(asyncio.Queue):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            return list(itertools.islice(self._queue, item.start, item.stop, item.step))
+        else:
+            return self._queue[item]
+
+    def __iter__(self):
+        return self._queue.__iter__()
+
+    def __len__(self):
+        return self.qsize()
 
     def to_paginator(self):
         paginator = EmbedPaginator(
@@ -132,20 +145,20 @@ class PlayerController(menus.Menu):
         await msg.remove_reaction(payload.emoji, payload.member)
         await self.bot.invoke(ctx)
 
-    @menus.button('\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS WITH CIRCLED ONE OVERLAY}')
-    async def repeat_single_track_command(self, payload: discord.RawReactionActionEvent):
+    @menus.button('\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}')
+    async def repeat_queue_command(self, payload: discord.RawReactionActionEvent):
         ctx = self.update_context(payload)
-        command = self.bot.get_command('loop_single_track')
+        command = self.bot.get_command('loop')
         ctx.command = command
         channel = ctx.bot.get_channel(int(payload.channel_id))
         msg = await channel.fetch_message(payload.message_id)
         await msg.remove_reaction(payload.emoji, payload.member)
         await self.bot.invoke(ctx)
 
-    @menus.button('\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}')
-    async def repeat_queue_command(self, payload: discord.RawReactionActionEvent):
+    @menus.button('\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS WITH CIRCLED ONE OVERLAY}')
+    async def repeat_single_track_command(self, payload: discord.RawReactionActionEvent):
         ctx = self.update_context(payload)
-        command = self.bot.get_command('loop')
+        command = self.bot.get_command('loop_single_track')
         ctx.command = command
         channel = ctx.bot.get_channel(int(payload.channel_id))
         msg = await channel.fetch_message(payload.message_id)
@@ -178,17 +191,21 @@ class Player(wavelink.Player):
         self.context: commands.Context = kwargs.pop('context', None)
         super().__init__(*args, **kwargs)
         self.queue = Queue()
-        self.waiting = False
-        self.updating = False
+        self.waiting = asyncio.Event()
+        self.updating = asyncio.Event()
         self.next = None
         self.loop_single_track = False
         self.loop = False
+        self.updating.set()
+        self.waiting.set()
 
     async def play_next(self):
         if self.loop and self.next:
             await self.queue.put(self.next)
-        if self.is_playing or self.waiting:
+        if self.is_playing:
             return
+        await self.waiting.wait()
+        self.waiting.clear()
         try:
             if self.loop_single_track:
                 track = self.next
@@ -201,13 +218,12 @@ class Player(wavelink.Player):
             return await self.teardown()
         await self.play(track)
         self.next = track
-        self.waiting = False
+        self.waiting.set()
         await self.invoke_controller()
 
     async def invoke_controller(self):
-        if self.updating:
-            return
-        self.updating = True
+        await self.updating.wait()
+        self.updating.clear()
         if not hasattr(self, 'controller'):
             self.controller = PlayerController(
                 embed=self._build_embed(), player=self)
@@ -224,7 +240,7 @@ class Player(wavelink.Player):
         else:
             embed = self._build_embed()
             await self.controller.message.edit(embed=embed)
-        self.updating = False
+        self.updating.set()
 
     def _build_embed(self):
         track: Track = self.current
@@ -233,16 +249,33 @@ class Player(wavelink.Player):
         channel = self.bot.get_channel(int(self.channel_id))
         embed = discord.Embed(
             title=f'Music Controller | {channel.name}', color=config.theme_color)
-        embed.description = f'Now Playing...\n```\n{track.title}\n```\n'
+        embed.description = f'**Now Playing...**\n```yaml\n{track.title}\n```\n'
         embed.set_image(url=track.thumb)
         embed.add_field(name='Duration', value=str(
             timedelta(milliseconds=int(track.length))))
         embed.add_field(name='Volume', value=f'**`{self.volume} %`**')
         embed.add_field(name='Requester', value=track.requester.mention)
+        embed.add_field(name='投稿者', value=track.author)
+        embed.add_field(name='イコライザ', value=self.eq.name.capitalize())
         embed.add_field(name='動画URL', value=f'[元動画にアクセス！]({track.uri})')
         embed.add_field(name='ループ', value='ON' if self.loop else 'OFF')
         embed.add_field(
-            name='1曲ループ', value='ON' if self.loop_single_track else 'OFF')
+            name='1曲ループ', value='ON' if self.loop_single_track else 'OFF'
+        )
+        if self.loop_single_track:
+            embed.add_field(
+                name='次の曲', value=f'```yaml\n{track.title}\n```', inline=False)
+        else:
+            if self.queue.qsize() == 0 and self.loop:
+                embed.add_field(
+                    name='次の曲', value=f'```yaml\n{track.title}\n```', inline=False
+                )
+            elif self.queue.qsize() > 0:
+                embed.add_field(
+                    name='次の曲', value=f'```yaml\n{self.queue[0].title}\n```', inline=False
+                )
+            else:
+                embed.add_field(name='次の曲', value=f'**-**', inline=False)
         return embed
 
     async def _is_fresh_position(self):
@@ -339,13 +372,6 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
     async def cog_before_invoke(self, ctx: commands.Context):
         player: Player = self.bot.wavelink.get_player(
             ctx.guild.id, cls=Player, context=ctx)
-        if player.context and player.context.channel != ctx.channel:
-            ctx.handled = True
-            await self.send_error(
-                ctx, '呼び出したチャンネル以外から音楽を操作することはできません！'
-                f'音楽を操作するには呼び出したチャンネル({player.context.channel.mention})にてコマンドを呼び出してください'
-            )
-            raise InvalidChannelException
         try:
             channel = self.bot.get_channel(int(player.channel_id))
         except TypeError:
@@ -394,19 +420,84 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
             query = f'ytsearch:{query}'
         tracks = await self.bot.wavelink.get_tracks(query)
         if not tracks:
-            return await ctx.send('検索しましたが，指定の曲を見つけることができませんでした', delete_after=10)
+            return await ctx.send('検索しましたが，指定の曲を見つけることができませんでした', delete_after=5)
         if isinstance(tracks, wavelink.TrackPlaylist):
-            await ctx.send(embed=self._playlist_to_embed(tracks), delete_after=15)
-            for track in tracks.tracks:
+            await ctx.send(embed=self._playlist_to_embed(tracks), delete_after=5)
+            for track in tracks.tracks[:5]:
                 track = Track(track.id, track.info, requester=ctx.author)
-                await ctx.send(embed=self._song_to_embed(player, track), delete_after=15)
+                await ctx.send(embed=self._song_to_embed(player, track), delete_after=5)
                 await player.queue.put(track)
+            if len(tracks) > 5:
+                await ctx.send(f"その他{len(tracks)-5}曲を追加しました", delete_after=5)
         else:
             track = Track(tracks[0].id, tracks[0].info, requester=ctx.author)
-            await ctx.send(embed=self._song_to_embed(player, track), delete_after=15)
+            await ctx.send(embed=self._song_to_embed(player, track), delete_after=5)
             await player.queue.put(track)
         if not player.is_playing:
             await player.play_next()
+        await player.invoke_controller()
+
+    async def song_select(self, songs: List[wavelink.Track], ctx: commands.Context):
+        embed = discord.Embed(title="曲を選んでください", color=config.theme_color)
+        emojis = ("1⃣", "2⃣", "3⃣", "4⃣", "5⃣")
+        for emoji, song in zip(emojis, songs):
+            embed.add_field(name=f"{emoji} {song.title}",
+                            value=song.uri, inline=False)
+        message = await ctx.send(embed=embed)
+        for emoji, _ in zip(emojis, songs):
+            await message.add_reaction(emoji)
+
+        def check_reaction(r: discord.Reaction, u: discord.Member):
+            return all([
+                r.message.id == message.id,
+                str(r.emoji) in emojis,
+                u.id != ctx.bot.user.id,
+                u.id == ctx.author.id,
+            ])
+        while True:
+            try:
+                reaction, _ = await ctx.bot.wait_for("reaction_add", timeout=30, check=check_reaction)
+            except asyncio.TimeoutError:
+                for emoji in emojis:
+                    await message.clear_reaction(emoji)
+                break
+            for i, emoji in enumerate(emojis):
+                if reaction.emoji == emoji:
+                    await message.delete()
+                    return i
+
+    @commands.command()
+    async def search(self, ctx: commands.Context, *, query: str):
+        '''
+        曲を検索します
+        '''
+        player: Player = self.bot.wavelink.get_player(
+            ctx.guild.id, cls=Player, context=ctx
+        )
+        if not player.is_connected:
+            await ctx.invoke(self.connect)
+        if not self.URL_REG.match(query):
+            query = f'ytsearch:{query}'
+        tracks = await self.bot.wavelink.get_tracks(query)
+        if not tracks:
+            return await ctx.send('検索しましたが，指定の曲を見つけることができませんでした', delete_after=5)
+        if isinstance(tracks, wavelink.TrackPlaylist):
+            await ctx.send(embed=self._playlist_to_embed(tracks), delete_after=5)
+            for track in tracks.tracks[:5]:
+                track = Track(track.id, track.info, requester=ctx.author)
+                await ctx.send(embed=self._song_to_embed(player, track), delete_after=5)
+                await player.queue.put(track)
+            if len(tracks) > 5:
+                await ctx.send(f"その他{len(tracks)-5}曲を追加しました", delete_after=5)
+        else:
+            idx = await self.song_select(tracks, ctx)
+            track = Track(tracks[idx].id, tracks[idx].info,
+                          requester=ctx.author)
+            await ctx.send(embed=self._song_to_embed(player, track), delete_after=5)
+            await player.queue.put(track)
+        if not player.is_playing:
+            await player.play_next()
+        await player.invoke_controller()
 
     @commands.command()
     async def pause(self, ctx: commands.Context):
@@ -517,13 +608,13 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         index -= 1
         qsize = player.queue.qsize()
         if not 0 <= index < qsize:
-            return await ctx.send('指定した番号の曲はまだ追加されていません')
+            return await ctx.send('指定した番号の曲はまだ追加されていません', delete_after=5)
         track = player.queue._queue[index]
         del player.queue._queue[index]
         embed = self._song_to_embed(player, track)
         embed.title = '曲を削除しました'
         embed.color = 0xff0000
-        await ctx.send(embed=embed, delete_after=10)
+        await ctx.send(embed=embed, delete_after=5)
 
     @commands.command(aliases=["vol"])
     async def volume(self, ctx: commands.Context, *, vol: int):
@@ -534,7 +625,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if not player.is_connected:
             return
         if not 0 <= vol <= 100:
-            return await ctx.send('音量は**0から100**(%)の間で指定してください')
+            return await ctx.send('音量は**0から100**(%)の間で指定してください', delete_after=5)
         await player.set_volume(vol)
         await player.invoke_controller()
         return await ctx.send(f'音量を**{vol}%**に設定しました', delete_after=5)
@@ -576,10 +667,11 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         if not player.is_connected:
             return
         if player.queue.qsize() < 1:
-            return await ctx.send('プレイリストに曲がありません')
+            return await ctx.send('プレイリストに曲がありません', delete_after=5)
         await ctx.message.add_reaction('\N{TWISTED RIGHTWARDS ARROWS}')
         random.shuffle(player.queue._queue)
         await asyncio.sleep(3)
+        await ctx.send('プレイリストをシャッフルしました', delete_after=5)
         await ctx.message.remove_reaction('\N{TWISTED RIGHTWARDS ARROWS}', self.bot.user)
 
     @commands.command(aliases=['eq'])
@@ -596,8 +688,8 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
         eq = eqs.get(equalizer.lower(), None)
         if not eq:
             joined = ", ".join(eqs.keys())
-            return await ctx.send(f'イコライザーは以下の形式のみサポートしています\n\n**{joined}**')
-        await ctx.send(f'イコライザーを設定しました: **{equalizer}**', delete_after=15)
+            return await ctx.send(f'イコライザーは以下の形式のみサポートしています\n\n**{joined}**', delete_after=5)
+        await ctx.send(f'イコライザーを設定しました: **{equalizer.capitalize()}**', delete_after=5)
         await player.set_eq(eq)
 
     @commands.command(aliases=["queue"])

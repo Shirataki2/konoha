@@ -26,7 +26,7 @@ to_japanese = {
     'view_guild_insight': 'サーバーインサイトの閲覧',
     'manage_guild': 'サーバーの管理',
     'manage_roles': 'ロールの管理',
-    'manage_channel': 'チャンネルの管理',
+    'manage_channels': 'チャンネルの管理',
     'kick_members': 'メンバーをキック',
     'ban_members': 'メンバーをBAN',
     'create_instant_invite': '招待の作成',

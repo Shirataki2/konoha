@@ -40,19 +40,19 @@ class Economy(commands.Cog):
         self.bot: Konoha = bot
 
     async def get_money(self, user: discord.Member):
-        money = await q.Money(self.bot,user.guild.id, user.id).get()
+        money = await q.Money(self.bot, user.guild.id, user.id).get()
         if money:
             return money
         else:
-            money = await q.Money.create(self.bot,user.id, user.guild.id, amount=1000)
+            money = await q.Money.create(self.bot, user.id, user.guild.id, amount=1000)
             return await money.get()
 
     async def get_money_by_id(self, guild_id, user_id):
-        money = await q.Money(self.bot,guild_id, user_id).get()
+        money = await q.Money(self.bot, guild_id, user_id).get()
         if money:
             return money
         else:
-            money = await q.Money.create(self.bot,user_id, guild_id, amount=1000)
+            money = await q.Money.create(self.bot, user_id, guild_id, amount=1000)
             return await money.get()
 
     async def update_money(self, user: discord.Member, diff: int, force=False):
@@ -60,14 +60,14 @@ class Economy(commands.Cog):
         if money.amount + diff < 0 and not force:
             return None
         else:
-            await q.Money(self.bot,user.guild.id, user.id).set(amount=money.amount + diff)
+            await q.Money(self.bot, user.guild.id, user.id).set(amount=money.amount + diff)
 
     async def update_money_by_id(self, guild_id, user_id, diff: int, force=False):
         money = await self.get_money_by_id(guild_id, user_id)
         if money.amount + diff < 0 and not force:
             return None
         else:
-            await q.Money(self.bot,guild_id, user_id).set(amount=money.amount + diff)
+            await q.Money(self.bot, guild_id, user_id).set(amount=money.amount + diff)
 
     @commands.command()
     @commands.guild_only()
@@ -88,7 +88,7 @@ class Economy(commands.Cog):
         '''
         money = await self.get_money(ctx.author)
         if money.bonus and money.bonus > 0:
-            return await ctx.send('今日はもうお金もらったでしょ！また明日の4時以降に試してね！')
+            return await ctx.send('今日はもうお金もらったでしょ！明日の4時以降に試してね！')
         p = random.random()
         if p < .65:
             salary = random.randint(250, 350)
@@ -104,7 +104,7 @@ class Economy(commands.Cog):
             prefix = '超大当たり！'
         await ctx.send(f'{prefix}{salary}ペリカGET!\n所持金💴 **{money.amount+salary}**ペリカ')
         await self.update_money(ctx.author, salary)
-        await q.Money(self.bot,ctx.guild.id, ctx.author.id).set(bonus=1)
+        await q.Money(self.bot, ctx.guild.id, ctx.author.id).set(bonus=1)
 
     @commands.Cog.listener()
     async def on_daily_completed(self, payload):

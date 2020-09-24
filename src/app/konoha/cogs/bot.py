@@ -44,7 +44,7 @@ class Bot(commands.Cog):
     @commands.command()
     async def ping(self, ctx: commands.Context):
         '''
-        通信遅延を計測します
+        通信遅延を計測します．
 
         __**Websocket遅延**__
         Discordと双方向通信する際に使われる回線の遅延です
@@ -83,7 +83,7 @@ class Bot(commands.Cog):
     @commands.command()
     async def invite(self, ctx: commands.Context):
         '''
-        Bot招待用のURLを表示します
+        Bot招待用のURLを表示します．
 
         このURL先にアクセスするとBotをあなたのサーバーに招待する画面へと移行します．
         '''
@@ -99,7 +99,7 @@ class Bot(commands.Cog):
     @commands.guild_only()
     async def guild(self, ctx: commands.Context):
         '''
-        ギルド(サーバー)に関する情報を表示します
+        ギルド(サーバー)に関する情報を表示します．
         '''
         guild: discord.Guild = ctx.guild
         members = guild.members
@@ -131,7 +131,7 @@ class Bot(commands.Cog):
     @commands.command()
     async def user(self, ctx: commands.Context, user=None):
         '''
-        ユーザーに関する情報を表示
+        ユーザーに関する情報を表示します．
 
         引数を指定しない場合は送信者の情報が表示されます
         '''
@@ -164,7 +164,7 @@ class Bot(commands.Cog):
     @commands.command()
     async def about(self, ctx: commands.Context):
         '''
-        当Botに関する情報を表示します
+        当Botに関する情報を表示します．
         '''
         bot = self.bot
         appinfo: discord.AppInfo = await bot.application_info()

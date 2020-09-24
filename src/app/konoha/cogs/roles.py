@@ -81,7 +81,7 @@ class Roles(commands.Cog):
             await ctx.send_help(ctx.command.name)
 
     @join.command(name="add")
-    async def _add(self, ctx: commands.Context, roles: commands.Greedy[discord.Role]):
+    async def join_add(self, ctx: commands.Context, roles: commands.Greedy[discord.Role]):
         '''
         サーバー参加時に付加されるロールを追加します
         '''
@@ -104,7 +104,7 @@ class Roles(commands.Cog):
         )
 
     @join.command(name="remove")
-    async def _remove(self, ctx: commands.Context, roles: commands.Greedy[discord.Role]):
+    async def join_remove(self, ctx: commands.Context, roles: commands.Greedy[discord.Role]):
         '''
         サーバー参加時に付加されるロールを指定し，削除します
         '''
@@ -134,7 +134,7 @@ class Roles(commands.Cog):
             )
 
     @join.command(name="list")
-    async def _list(self, ctx: commands.Context):
+    async def join_list(self, ctx: commands.Context):
         '''
         サーバー参加時に付加されるロールの一覧を表示します
         '''
@@ -205,6 +205,68 @@ class Roles(commands.Cog):
                 embed.description += f"{emoji} {to_japanese[key]}\n"
         await ctx.send(embed=embed)
 
+    @role.group(hidden=True, name="all")
+    @checks.has_perms(administrator=True)
+    async def _all(self, ctx: commands.Context):
+        '''
+        以下のサブコマンドとともに`{prefix}role all add @role`のように実行して下さい
+        '''
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command.name)
+
+    @_all.command(name="add")
+    @commands.cooldown(1, 600, commands.BucketType.guild)
+    async def all_add(self, ctx: commands.Context, roles: commands.Greedy[discord.Role]):
+        '''
+        全員にロールを付与します(要管理者権限; 10分に1度のみ利用可)
+        '''
+        if not roles:
+            return await self.bot.send_error(
+                ctx, "引数が不正です！",
+                "全員に付与するロールを最低一つ指定してしてください"
+            )
+        try:
+            await asyncio.gather(*[self.check_roles(ctx, ctx.me, ctx.author, role) for role in roles], return_exceptions=True)
+        except:
+            pass
+        await asyncio.gather(*[m.add_roles(*roles) for m in ctx.guild.members])
+        await self.bot.send_notification(
+            ctx, "全員へのロール付加が完了しました",
+            ", ".join([f"{r.mention}" for r in roles]) +
+            "を全メンバーに付加しました"
+        )
+
+    @_all.command(name="remove")
+    @commands.cooldown(1, 600, commands.BucketType.guild)
+    async def all_remove(self, ctx: commands.Context, roles: commands.Greedy[discord.Role]):
+        '''
+        全員からロールをはく奪します(要管理者権限; 10分に1度のみ利用可)
+        '''
+        if not roles:
+            return await self.bot.send_error(
+                ctx, "引数が不正です！",
+                "全員からはく奪するロールを最低一つ指定してしてください"
+            )
+        await asyncio.gather(*[self.check_roles(ctx, ctx.me, ctx.author, role) for role in roles])
+        try:
+            await asyncio.gather(*[m.remove_roles(*roles) for m in ctx.guild.members], return_exceptions=True)
+        except:
+            pass
+        await self.bot.send_notification(
+            ctx, "全員からのロールはく奪が完了しました",
+            ", ".join([f"{r.mention}" for r in roles]) +
+            "を全メンバーからはく奪しました"
+        )
+
+    @all_add.error
+    @all_remove.error
+    async def on_all_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            ctx.handled = True
+            await self.bot.send_cooldown_error(
+                ctx, error, 1, 10
+            )
+
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         roles = await q.JoinRole(self.bot, member.guild.id).get()
@@ -243,8 +305,8 @@ class Roles(commands.Cog):
         bot: discord.Member = ctx.me
         await self.check_roles(ctx, bot, author, role)
 
-    @_add.before_invoke
-    @_remove.before_invoke
+    @join_add.before_invoke
+    @join_remove.before_invoke
     async def join_role_hierarchy_check(self, ctx: commands.Context):
         _, _, roles = ctx.args
         author: discord.Member = ctx.author

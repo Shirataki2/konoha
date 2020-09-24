@@ -74,7 +74,7 @@ class Messages(commands.Cog):
         await asyncio.sleep(3)
         await msg.delete()
 
-    @commands.group()
+    @commands.group(hidden=True)
     @commands.guild_only()
     async def expand(self, ctx: commands.Context):
         '''

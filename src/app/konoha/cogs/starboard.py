@@ -42,7 +42,7 @@ class Starboard(commands.Cog):
         )
         return embed
 
-    @commands.group()
+    @commands.group(hidden=True)
     @checks.can_manage_guild()
     @commands.guild_only()
     async def starboard(self, ctx: commands.Context):

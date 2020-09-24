@@ -22,7 +22,7 @@ class CustomHelpCommand(commands.HelpCommand):
             if not command.signature and command.parent:
                 return f"`{self.clean_prefix}{command.parent} {command.name}`"
             if command.signature and command.parent:
-                return f"`{self.clean_prefix}{command.parent} {command.name}` `{command.signature}`"
+                return f"`{self.clean_prefix}{command.parent} {command.name} {command.signature}`"
         else:
             if not command.signature and not command.parent:
                 return f"`{self.clean_prefix}{command.name}`"
@@ -31,7 +31,7 @@ class CustomHelpCommand(commands.HelpCommand):
             if not command.signature and command.parent:
                 return f"`{self.clean_prefix}{command.parent} {command.name}`"
             if command.signature and command.parent:
-                return f"`{self.clean_prefix}{command.parent} {command.name}` `{command.signature}`"
+                return f"`{self.clean_prefix}{command.parent} {command.name} {command.signature}`"
 
     def get_command_aliases(self, command: commands.Command):
         if not command.aliases:

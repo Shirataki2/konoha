@@ -70,7 +70,7 @@ class Fun(commands.Cog):
     @commands.command(aliases=['sd'])
     async def suddendeath(self, ctx: commands.Context, *, body: str = None):
         '''
-        > 突然の死 <
+        \> 突然の死 < のような文章を生成します．
         '''
         if body is None:
             body = '突然の死'
@@ -83,7 +83,7 @@ class Fun(commands.Cog):
     @commands.cooldown(5, 60, commands.BucketType.guild)
     async def run(self, ctx: commands.Context, lang, *, code: str):
         '''
-        ソースコードを走らせます
+        C++,Python,Ruby,Rust,Haskell,Javascript,Shellのソースコードを走らせます．
 
         Twitterのシェル芸Botと同様，ファイルを送信したら/mediaにファイルが置かれ，
 

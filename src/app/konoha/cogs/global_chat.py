@@ -27,7 +27,7 @@ class GlobalChat(commands.Cog):
     def __init__(self, bot: Konoha):
         self.bot: Konoha = bot
 
-    @commands.group()
+    @commands.group(hidden=True)
     async def gc(self, ctx: commands.Context):
         '''
         以下のサブコマンドとともに`{prefix}gc register`のように実行して下さい
