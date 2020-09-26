@@ -238,8 +238,15 @@ class Player(wavelink.Player):
                 embed=self._build_embed(), player=self)
             await self.controller.start(self.context)
         else:
-            embed = self._build_embed()
-            await self.controller.message.edit(embed=embed)
+            for i in range(3):
+                try:
+                    embed = self._build_embed()
+                    await self.controller.message.edit(embed=embed)
+                    break
+                except:
+                    continue
+            else:
+                await self.controller.message.edit(embed=embed)
         self.updating.set()
 
     def _build_embed(self):

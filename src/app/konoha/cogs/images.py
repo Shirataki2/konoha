@@ -32,6 +32,7 @@ class Images(commands.Cog):
         self.postloop.cancel()
 
     @commands.command(hidden=True)
+    @commands.is_owner()
     async def autobooru(self, ctx: commands.Context, *, tags):
         channel_id = ctx.channel.id
         if hook := await q.Hook(self.bot, ctx.guild.id, channel_id).get():
@@ -54,6 +55,7 @@ class Images(commands.Cog):
             return await webhook_.send(f"Webhookの登録が完了しました")
 
     @commands.command(hidden=True)
+    @commands.is_owner()
     async def stopbooru(self, ctx: commands.Context):
         async with aiohttp.ClientSession() as session:
             if hook := await q.Hook(self.bot, ctx.guild.id, ctx.channel.id).get():

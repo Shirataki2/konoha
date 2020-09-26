@@ -97,7 +97,7 @@ class CustomHelpCommand(commands.HelpCommand):
                     d = self.get_command_description(c)
                     a = self.get_command_aliases(c)
                     j += 1
-                    if j > 0 and j % 10 == 0:
+                    if j > 0 and j % 8 == 0:
                         i += 1
                         new_page()
                     if c.aliases:

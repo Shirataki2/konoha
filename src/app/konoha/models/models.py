@@ -64,6 +64,7 @@ user_status = Table(
     meta,
     Column("id", String(24), primary_key=True, nullable=False),
     Column("moderator", Boolean(), nullable=True),
+    Column("muted", Boolean(), nullable=True, server_default=sa.sql.false()),
 )
 
 vote = Table(

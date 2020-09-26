@@ -42,6 +42,36 @@ class Bot(commands.Cog):
         self.bot: Konoha = bot
 
     @commands.command()
+    @commands.cooldown(1, 180, commands.BucketType.user)
+    async def report(self, ctx: commands.Context, *, text):
+        '''
+        バグなど開発者に報告できます(荒らし防止のため3分以内での連投を禁止しています．ご了承ください．)
+        '''
+        channel = ctx.bot.get_channel(756841194293690418)
+        embed = discord.Embed(title="報告", color=config.theme_color)
+        embed.description = f"```\n{text}\n```"
+        embed.add_field(
+            name="サーバー", value=f"{ctx.guild.name} / {ctx.guild.id}")
+        embed.add_field(
+            name="チャンネル", value=f"{ctx.channel.name} / {ctx.channel.id}")
+        embed.add_field(
+            name="ユーザー", value=f"{ctx.author.name} / {ctx.author.id}")
+        await channel.send(embed=embed)
+        await ctx.send("報告が完了しました！", delete_after=5)
+
+    @report.error
+    async def on_report_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "引数が不足しています！",
+                "バグ内容など報告したい内容を引数に入力してください"
+            )
+        if isinstance(error, commands.CommandOnCooldown):
+            ctx.handled = True
+            await self.bot.send_cooldown_error(ctx, error, 1, 3)
+
+    @commands.command()
     async def ping(self, ctx: commands.Context):
         '''
         通信遅延を計測します．
@@ -129,20 +159,13 @@ class Bot(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def user(self, ctx: commands.Context, user=None):
+    async def user(self, ctx: commands.Context, member: discord.Member = None):
         '''
         ユーザーに関する情報を表示します．
 
         引数を指定しない場合は送信者の情報が表示されます
         '''
-        def mention_to_id(mention):
-            if members := re.findall(r'<@[\!&]?([0-9]+)?>', mention):
-                return [int(member) for member in members]
-            else:
-                return None
-        try:
-            member = await ctx.guild.fetch_member(mention_to_id(user)[0])
-        except:
+        if member is None:
             member = ctx.author
         embed = discord.Embed(title=f'{member.name}', colour=member.color)
         embed.set_thumbnail(url=str(member.avatar_url))

@@ -64,7 +64,7 @@ class GlobalChat(commands.Cog):
                     name="Global Chat"
                 )
                 await q.Guild(self.bot, ctx.guild.id).set(gc_channel=channel.id, gc_url=newhook.url)
-                await ctx.send(f"グローバルチャットの投稿先{channel.mention}に変更しました")
+                await ctx.send(f"グローバルチャットの投稿先を{channel.mention}に変更しました")
                 await hook.delete()
 
     @gc.command()
@@ -86,6 +86,38 @@ class GlobalChat(commands.Cog):
                 await ctx.send(f"グローバルチャットサービスの利用を終了しました")
                 await hook.delete()
 
+    @gc.command(hidden=True)
+    @commands.guild_only()
+    @checks.bot_has_perms(manage_webhooks=True)
+    async def mute(self, ctx: commands.Context, user: discord.User, status: bool = True):
+        '''
+        グローバルチャットでの発言行為を禁止させます
+        '''
+        if not discord.utils.get(ctx.author.roles, id=756589438175412374):
+            return await self.bot.send_error(
+                ctx, "実行権限がありません",
+                "サポートサーバーのモデレーターのみが実行可能なコマンドです"
+            )
+        guild = await q.Guild(self.bot, ctx.guild.id).get()
+        if guild.gc_channel is None:
+            await ctx.send(f"グローバルチャットサービスはまだ利用していません")
+        else:
+            db_user = await q.User(self.bot, user.id).get()
+            if not db_user:
+                await q.User.create(self.bot, user.id, muted=status)
+            else:
+                await q.User(self.bot, user.id).set(muted=status)
+            if status:
+                await self.bot.send_notification(
+                    ctx, "ミュートが完了しました",
+                    f"{user.mention}のグローバルチャットでの発言を禁止しました"
+                )
+            else:
+                await self.bot.send_notification(
+                    ctx, "ミュートの解除が完了しました",
+                    f"{user.mention}のグローバルチャットでの発言を許可しました"
+                )
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot or message.guild is None:
@@ -93,6 +125,14 @@ class GlobalChat(commands.Cog):
         guild = await q.Guild(self.bot, message.guild.id).get(verbose=2)
         if guild.gc_channel != str(message.channel.id):
             return
+        user = await q.User(self.bot, message.author.id).get()
+        if user and user.muted:
+            await message.channel.send(
+                f"{message.author.mention} あなたはグローバルチャットでの発言が禁止されています",
+                delete_after=5
+            )
+            await asyncio.sleep(4)
+            return await message.delete()
         guilds = [
             g
             for g in await q.Guild.get_all(self.bot, verbose=2)
@@ -115,9 +155,15 @@ async def send_global_message(guild, message):
         try:
             hook = discord.Webhook.from_url(
                 guild.gc_url, adapter=discord.AsyncWebhookAdapter(session))
+            attachments = message.attachments
+            files = await asyncio.gather(*[
+                attachment.to_file()
+                for attachment in attachments
+            ])
             await hook.send(
                 message.content,
                 username=message.author.name,
+                files=files,
                 avatar_url=message.author.avatar_url_as(format="png"),
                 allowed_mentions=discord.AllowedMentions(
                     everyone=False, users=False, roles=False)

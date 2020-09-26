@@ -16,6 +16,7 @@ from konoha.core.exceptions import to_japanese
 from konoha.core.commands import checks
 from konoha.core.bot.konoha import Konoha
 from konoha.core.log.logger import get_module_logger
+from konoha.core.utils.pagination import EmbedPaginator
 logger = get_module_logger(__name__)
 
 
@@ -152,7 +153,7 @@ class Roles(commands.Cog):
             )
 
     @role.command()
-    async def info(
+    async def perm(
         self,
         ctx: commands.Context,
         target: Union[discord.Member, discord.Role, None] = None,
@@ -204,6 +205,71 @@ class Roles(commands.Cog):
                 emoji = "✅" if perm else "❌"
                 embed.description += f"{emoji} {to_japanese[key]}\n"
         await ctx.send(embed=embed)
+
+    @role.command()
+    async def members(self, ctx: commands.Context, role: discord.Role):
+        '''
+        特定の役職に属するメンバーを一覧表示します．
+        '''
+        paginator = EmbedPaginator(
+            title=f"@{role.name}のメンバーリスト (全{len(role.members)}人)",
+            color=role.color,
+            footer=f"Page $p / $P"
+        )
+        member_str = [""]
+        thres = 600
+        for member in role.members:
+            member_str[-1] += f"{member.name} ({member.mention})\n"
+            if len(member_str[-1]) > thres:
+                member_str.append("")
+        for i in range(len(member_str)):
+            if member_str[i] == "":
+                break
+            paginator.new_page()
+            paginator.content[i]["description"] = member_str[i]
+        await paginator.paginate(ctx)
+
+    @members.error
+    async def on_members_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "引数が不足しています！",
+                "引数に対象となるロールを指定してください"
+            )
+
+    @role.command(name="list")
+    async def role_list(self, ctx: commands.Context):
+        '''
+        サーバー内の全役職と属するメンバー数を表示します．
+        '''
+        roles = ctx.guild.roles[::-1]
+        if roles:
+            paginator = EmbedPaginator(
+                title=f"役職リスト",
+                color=config.theme_color,
+                footer=f"Page $p / $P"
+            )
+            role_str = [""]
+            thres = 1980
+            for role in roles:
+                if role.name == "@everyone":
+                    role_str[-1] += f"@everyone　　　{len(role.members)}人\n"
+                else:
+                    role_str[-1] += f"{role.mention}　　　{len(role.members)}人\n"
+                if len(role_str[-1]) > thres:
+                    role_str.append("")
+            for i in range(len(role_str)):
+                if role_str[i] == "":
+                    break
+                paginator.new_page()
+            paginator.content[i]["description"] = role_str[i]
+            await paginator.paginate(ctx)
+        else:
+            await self.bot.send_warning(
+                ctx, "役職が見つかりません",
+                "このサーバーにはまだ何も役職が無いようです"
+            )
 
     @role.group(hidden=True, name="all")
     @checks.has_perms(administrator=True)
