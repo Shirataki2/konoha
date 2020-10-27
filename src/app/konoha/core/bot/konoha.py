@@ -32,7 +32,7 @@ class Konoha(BotBase):
     @property
     def tomorrow(self):
         h = datetime.today().hour
-        update_hour = 19
+        update_hour = 15
         update_time = datetime.today().replace(
             hour=update_hour, minute=0, second=0, microsecond=0
         )

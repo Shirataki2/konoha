@@ -9,7 +9,7 @@ import tabulate
 import aiomysql
 import glob
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional
 from pathlib import Path
@@ -175,7 +175,7 @@ class Bot(commands.Cog):
         embed.add_field(name='a.k.a.', value=f'{member.display_name}')
         embed.add_field(name='ID', value=f'{member.id}')
         embed.add_field(
-            name='参加日時', value=f'{member.joined_at.strftime("%y/%m/%d %H:%M:%S")}')
+            name='参加日時', value=f'{member.joined_at.astimezone(timezone(timedelta(hours=+9))).strftime("%y/%m/%d %H:%M:%S")}')
         embed.add_field(name='状態', value=f'{member.status}')
         if member.activity:
             embed.add_field(name='アクティビティ', value=f'{member.activity.name}')
@@ -184,7 +184,7 @@ class Bot(commands.Cog):
         embed.add_field(
             name='役職', value=f'{", ".join([role.name for role in member.roles])}')
         embed.set_footer(
-            text=f'ユーザー作成日時: {member.created_at.strftime("%y/%m/%d %H:%M:%S")}')
+            text=f'ユーザー作成日時: {member.created_at.astimezone(timezone(timedelta(hours=+9))).strftime("%y/%m/%d %H:%M:%S")}')
         await ctx.send(embed=embed, delete_after=120)
 
     @user.error
