@@ -92,7 +92,7 @@ class BotBase(commands.Bot):
     def get_all_cogs(self, reload=False):
         dirname = os.path.dirname(os.path.abspath(__file__))
         cogs = glob.glob(f'{dirname}/../../cogs/**.py')
-        logger.debug(f"Cogを{'再' if reload else ''}読込中...")
+        logger.info(f"Cogを{'再' if reload else ''}読込中...")
         for cog in cogs:
             cogname = os.path.basename(os.path.splitext(cog)[0])
             if cogname[:2] == "__":
@@ -103,7 +103,7 @@ class BotBase(commands.Bot):
                     self.reload_extension(modulename)
                 else:
                     self.load_extension(modulename)
-                logger.debug(f'\t{modulename} ... 成功')
+                logger.info(f'\t{modulename} ... 成功')
             except Exception as e:
                 logger.error(f'\t{modulename} ... 失敗')
                 raise e
@@ -120,15 +120,15 @@ class BotBase(commands.Bot):
         finally:
             logger.info("Botを終了中です...")
             self.loop.run_until_complete(self.logout())
-            logger.debug("\tログアウト完了")
+            logger.info("\tログアウト完了")
             for task in asyncio.all_tasks(self.loop):
                 task.cancel()
-                logger.debug(f"\tTask: {task.get_name()}をキャンセルしました")
+                logger.info(f"\tTask: {task.get_name()}をキャンセルしました")
             try:
                 self.loop.run_until_complete(
                     asyncio.gather(*asyncio.all_tasks(self.loop)))
             except asyncio.CancelledError:
-                logger.debug("すべてのタスクをキャンセルしました")
+                logger.info("すべてのタスクをキャンセルしました")
             finally:
                 self.loop.run_until_complete(self.session.close())
                 logger.info("Bye")

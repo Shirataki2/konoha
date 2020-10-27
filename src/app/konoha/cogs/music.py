@@ -342,7 +342,7 @@ class Music(commands.Cog, wavelink.WavelinkMixin):
 
     @wavelink.WavelinkMixin.listener()
     async def on_node_ready(self, node: wavelink.Node):
-        logger.debug(f'Wavelink Node {node.identifier} ... 準備完了')
+        logger.info(f'Wavelink Node {node.identifier} ... 準備完了')
 
     @wavelink.WavelinkMixin.listener('on_track_stuck')
     @wavelink.WavelinkMixin.listener('on_track_end')

@@ -64,5 +64,5 @@ def get_module_logger(modname):
     formatter = logging.Formatter(logger_format, datefmt=date_format)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     return logger

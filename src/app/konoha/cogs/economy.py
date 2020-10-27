@@ -84,11 +84,11 @@ class Economy(commands.Cog):
 
         リアルマネーには換算されませんが沢山ログインして稼ごう！！
 
-        朝4時にリセットです
+        0時にリセットです
         '''
         money = await self.get_money(ctx.author)
         if money.bonus and money.bonus > 0:
-            return await ctx.send('今日はもうお金もらったでしょ！明日の4時以降に試してね！')
+            return await ctx.send('今日はもうお金もらったでしょ！0時以降に試してね！')
         p = random.random()
         if p < .65:
             salary = random.randint(250, 350)

@@ -44,7 +44,7 @@ class Konoha(BotBase):
     async def on_ready(self):
         ev = await q.Timer.search(self, event='daily')
         if not ev:
-            logger.debug('Create Daily Event')
+            logger.info('Create Daily Event')
             await self.timer.create_event('daily', self.tomorrow, None)
         await super().on_ready()
 
@@ -93,17 +93,17 @@ class Konoha(BotBase):
             )
 
     async def on_command(self, ctx: commands.Context):
-        logger.debug("== [コマンド実行] ==")
+        logger.info("== [コマンド実行] ==")
         if ctx.guild:
-            logger.debug(
+            logger.info(
                 f"[{ctx.guild.name}@{ctx.guild.id}] [{ctx.author.name}@{ctx.author.id}]"
             )
         else:
-            logger.debug(
+            logger.info(
                 f"[DM] [{ctx.author.name}@{ctx.author.id}]"
             )
-        logger.debug(f"{ctx.message.content}")
-        logger.debug("===================")
+        logger.info(f"{ctx.message.content}")
+        logger.info("===================")
 
     async def morph(self, text: str) -> List['Word']:
         def _morph():

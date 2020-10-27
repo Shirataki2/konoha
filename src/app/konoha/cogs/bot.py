@@ -161,11 +161,14 @@ class Bot(commands.Cog):
     @commands.command()
     async def user(self, ctx: commands.Context, member: discord.Member = None):
         '''
-        ユーザーに関する情報を表示します．
+        あなた自身に関する情報を表示します(2分後に自動削除)．
 
-        引数を指定しない場合は送信者の情報が表示されます
+        管理者ユーザーは引数を指定し，特定ユーザーの情報を表示することが可能です．
         '''
-        if member is None:
+        if ctx.author.guild_permissions.value & 268435518:
+            if member is None:
+                member = ctx.author
+        else:
             member = ctx.author
         embed = discord.Embed(title=f'{member.name}', colour=member.color)
         embed.set_thumbnail(url=str(member.avatar_url))
@@ -182,7 +185,16 @@ class Bot(commands.Cog):
             name='役職', value=f'{", ".join([role.name for role in member.roles])}')
         embed.set_footer(
             text=f'ユーザー作成日時: {member.created_at.strftime("%y/%m/%d %H:%M:%S")}')
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, delete_after=120)
+
+    @user.error
+    async def on_user_error(self, ctx: commands.Context, error: Exception):
+        if isinstance(error, commands.BadArgument):
+            ctx.handled = True
+            await self.bot.send_error(
+                ctx, "ユーザーが見つかりませんでした！",
+                f"`{ctx.message.content.split()[1]}`というユーザーは見つかりませんでした..."
+            )
 
     @commands.command()
     async def about(self, ctx: commands.Context):
