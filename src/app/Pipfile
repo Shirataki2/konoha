@@ -6,6 +6,7 @@ verify_ssl = true
 [dev-packages]
 rope = "*"
 mypy = "*"
+flake8 = "*"
 
 [packages]
 "discord.py" = {extras = ["voice"], version = "*"}

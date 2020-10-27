@@ -23,6 +23,7 @@ from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
 from konoha.core.converters import DurationToSecondsConverter, ColorConverter
 from konoha.core.log.logger import get_module_logger
+import aiohttp
 logger = get_module_logger(__name__)
 
 
@@ -43,9 +44,39 @@ class Test(commands.Cog):
         self.bot: Konoha = bot
 
     @commands.command(hidden=True)
-    async def tmp(self, ctx: commands.Context, num: int):
-        discord.VoiceChannel.connect()
+    async def tmp(self, ctx: commands.Context):
+        msg = await self.bot.wait_for(
+            'message',
+            check=lambda m: \
+                m.channel.id == 756602618918469645 and
+                m.author.id == 756592679160119386 and 
+                m.embeds and
+                m.embeds[0].fields
+        )
+        print(msg)
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+        if message.channel.id == 756602618918469645 and message.attachments and len(message.attachments) >= 2:
+            api_key = "ea4e09a2-733b-40d0-9af1-a3a3679c780f"
+            async with self.bot.session.post(
+                "https://api.deepai.org/api/fast-style-transfer", 
+                data={
+                    'content': message.attachments[0].url,
+                    'style': message.attachments[1].url
+                }, 
+                headers={
+                    "Api-Key": api_key,
+                }
+            ) as resp:
+                data = await resp.json()
+                await message.channel.send(data["output_url"])
+            try:
+                print(data)
+            except KeyError:
+                pass
 
 def setup(bot):
     bot.add_cog(Test(bot))
