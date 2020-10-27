@@ -5,7 +5,7 @@ description: 010 -
 
 <command 
   name="daily"
-  rate="ユーザーあたり一日一度まで(日本時間朝4時にリセット)"
+  rate="ユーザーあたり一日一度まで(日本時間深夜0時にリセット)"
   :roles="[{name: 'サーバーOnly', color: 'green'}]"
   :usages="['k:daily']">
 
