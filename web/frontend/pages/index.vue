@@ -2,8 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="12">
-        <h2>よおこそ</h2>
-        <p>誠意制作中です．トップページのデザインが一番難しいね．</p>
+        <p>制作中</p>
       </v-col>
     </v-row>
   </v-container>
