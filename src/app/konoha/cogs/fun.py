@@ -174,10 +174,14 @@ class Fun(commands.Cog):
             )
 
     @commands.command()
-    @commands.cooldown(2, 120, commands.BucketType.guild)
+    @commands.cooldown(10, 120, commands.BucketType.guild)
     async def translate(self, ctx: commands.Context, target: str, *, text: str):
         '''
         [DeepL API](https://www.deepl.com/home)を利用して文章の翻訳を行います
+
+        言語は以下のようにして指定してください
+
+        "DE", "EN-GB", "EN-US", "EN", "FR", "IT", "JA", "ES", "NL", "PL", "PT-PT", "PT-BR", "PT", "RU", "ZH"
         '''
         if len(text) > 1000:
             return await self.bot.send_error(
@@ -230,7 +234,7 @@ class Fun(commands.Cog):
     async def on_translate_error(self, ctx: commands.Context, error):
         if isinstance(error, commands.CommandOnCooldown):
             ctx.handled = True
-            await self.bot.send_cooldown_error(ctx, error, 3, 2)
+            await self.bot.send_cooldown_error(ctx, error, 10, 2)
         if isinstance(error, commands.MissingRequiredArgument):
             ctx.handled = True
             await self.bot.send_error(

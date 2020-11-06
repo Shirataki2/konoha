@@ -112,8 +112,11 @@ class Reminder(commands.Cog):
                 messages.append(await ctx.send("リマインダー作成をキャンセルしました"))
                 await asyncio.sleep(2)
                 messages.append(message1)
-                for message in messages:
-                    await message.delete()
+                try:
+                    for message in messages:
+                        await message.delete()
+                except:
+                    pass
                 return
             else:
                 messages.append(message1)
@@ -184,11 +187,12 @@ class Reminder(commands.Cog):
             return await ctx.send("開催予定のリマインダーはありません")
         paginator.new_page()
         for reminder in reminders:
+            user = ctx.guild.get_member(int(reminder.user))
             paginator.add_row(
                 f"{reminder.content}",
                 (
+                    f"`  記入者  `: {user.mention}\n" if user else ""
                     f"` 開催日時 `: {reminder.start_at.strftime('%Y/%m/%d %H:%M')}\n"
-                    f"`  記入者  `: {ctx.guild.get_member(int(reminder.user)).mention}\n"
                     f"`イベントID`: {reminder.id:05d}\n"
                     f"` 登録日時 `: {reminder.created_at.astimezone(timezone('Asia/Tokyo')).strftime('%Y/%m/%d %H:%M')}"
                 )

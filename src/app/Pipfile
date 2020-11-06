@@ -24,12 +24,12 @@ pynacl = "*"
 youtube-dl = "*"
 pydub = "*"
 matplotlib = "*"
-opencv-python = "*"
 pyjwt = "*"
 cryptography = "*"
 mecab-python3 = "*"
 jaconv = "*"
 emoji = "*"
+pymysql = "*"
 wavelink = "*"
 84caae8 = {git = "https://github.com/Rapptz/discord-ext-menus"}
 

@@ -280,7 +280,9 @@ class Administrator(commands.Cog):
         cmd = f'async def func():\n{textwrap.indent(body, "  ")}'
         try:
             exec(cmd, env)
+            await ctx.message.add_reaction('✅')
         except Exception as e:
+            await ctx.message.add_reaction('😲')
             return await self.bot.send_error(ctx, f'{e.__class__.__name__}', str(e))
         func = env['func']
         stdout = io.StringIO()
@@ -295,10 +297,6 @@ class Administrator(commands.Cog):
             )
         else:
             value = stdout.getvalue()
-            try:
-                ctx.message.add_reaction('✅')
-            except:
-                pass
             if ret is None:
                 if value:
                     await ctx.send(f'```py\n{value}\n```')

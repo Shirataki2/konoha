@@ -2,7 +2,7 @@ import asyncio
 import itertools
 import random
 from discord.ext import commands
-from discord import VoiceClient, Embed, PCMVolumeTransformer, FFmpegPCMAudio
+from discord import VoiceClient, Embed, PCMVolumeTransformer, FFmpegOpusAudio
 from typing import Union
 from konoha.extensions.music.downloader import YTDLDownloader, Video
 from konoha.core.bot.konoha import Konoha
@@ -15,10 +15,11 @@ class MusicException(KonohaException):
 
 
 class Song:
-    def __init__(self, src: Video, ctx: commands.Context):
+    def __init__(self, src: Video, ctx: commands.Context, bitrate):
         self.src = src
         self.ctx = ctx
         self.requester = ctx.author
+        self.bitrate = bitrate
 
     def get_duration(self):
         dur = int(self.src.duration)
@@ -40,12 +41,11 @@ class Song:
         return t
 
     def get_source(self):
-        return PCMVolumeTransformer(
-            FFmpegPCMAudio(
-                self.src.url,
-                before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                options=f'-vn'
-            )
+        return FFmpegOpusAudio(
+            self.src.url,
+            bitrate=self.bitrate,
+            before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+            options=f'-vn'
         )
 
     def to_embed(self, *, embed=None):
@@ -108,7 +108,7 @@ class PlayList(asyncio.Queue):
 
 
 class VoiceState:
-    def __init__(self, bot: Konoha, ctx: commands.Context):
+    def __init__(self, bot: Konoha, ctx: commands.Context, bitrate=128):
         self.bot = bot
         self.tts = False
         self.ctx = ctx
@@ -119,6 +119,7 @@ class VoiceState:
         self.vc = None
         self.cur = None
         self.queue = PlayList()
+        self.bitrate = bitrate
         self.playback = self.bot.loop.create_task(self.playback_loop())
 
     @property
