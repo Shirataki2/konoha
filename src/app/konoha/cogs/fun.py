@@ -174,7 +174,7 @@ class Fun(commands.Cog):
             )
 
     @commands.command()
-    @commands.cooldown(10, 120, commands.BucketType.guild)
+    @commands.cooldown(60, 120, commands.BucketType.guild)
     async def translate(self, ctx: commands.Context, target: str, *, text: str):
         '''
         [DeepL API](https://www.deepl.com/home)を利用して文章の翻訳を行います
@@ -255,10 +255,11 @@ class Fun(commands.Cog):
         """
         引数に与えられた文字を絵文字化します．改行したい場合は`;`を入力してください
         """
-        if len(text.replace(";", "")) > 12:
+        text = text.replace(" ", "")
+        if len(text.replace(";", "")) > 60:
             return await self.bot.send_error(
                 ctx, "最大文字数を超過しています",
-                "最大12文字まで絵文字に変換することが可能です"
+                "最大60文字まで絵文字に変換することが可能です"
             )
         if color is None:
             color = (244, 67, 54)  # type: ignore

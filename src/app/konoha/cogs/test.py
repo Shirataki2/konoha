@@ -3,13 +3,19 @@ from discord.ext import commands
 
 import re
 import os
+import io
 import asyncio
 import subprocess
 import tabulate
 import aiomysql
+import random
 import glob
 import json
 import wavelink
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from typing import Optional
@@ -19,6 +25,8 @@ from time import perf_counter
 import konoha
 import konoha.models.crud2 as q
 from konoha.core import config
+from konoha.core.utils import TextImageGenerator
+from konoha.core.utils.circularizer import Circularizer
 from konoha.core.bot.konoha import Konoha
 from konoha.core.commands import checks
 from konoha.core.converters import DurationToSecondsConverter, ColorConverter
@@ -54,6 +62,126 @@ class Test(commands.Cog):
                 m.embeds[0].fields
         )
         print(msg)
+
+
+    @commands.group(hidden=True)
+    async def dev(self, ctx: commands.Context):
+        pass
+
+
+    @dev.group()
+    async def stat(self, ctx: commands.Context):
+        pass
+
+    @stat.group(aliases=["freq"])
+    async def frequency(self, ctx: commands.Context):
+        pass
+
+    @frequency.command(aliases=["m"])
+    async def message(self, ctx: commands.Context, channel: discord.TextChannel = None, N: int = 2000):
+        if channel is None:
+            channel = ctx.channel
+        emb_message = await ctx.send(f'{self.bot.custom_emojis.loading} 集計中...')
+        messages = []
+        N = max(1, min(10000, N))
+        i = 0
+        async for msg in channel.history(limit=N):
+            i += 1
+            messages.append(msg)
+            if random.random() > 0.997:
+                await emb_message.edit(content=f'{self.bot.custom_emojis.loading} 集計中... ({100*i/N:.1f} %)')
+        await emb_message.edit(content=f'{self.bot.custom_emojis.loading} 集計中... (100.0 %)')
+        heatmap = np.zeros((7, 24)).astype(np.int64)
+        for message in messages:
+            t = message.created_at + timedelta(hours=9)
+            wd = t.weekday()
+            h = t.hour
+            heatmap[wd, h] += 1
+        heatmap = heatmap[::-1]
+        fig, ax = plt.subplots(figsize=(14, 6))
+        fig.suptitle(f"#{channel.name} の活発な時間帯 (直近{N}件)", fontsize=26)
+        hm = ax.pcolor(heatmap, cmap="Blues")
+        ax.set_xticks(np.arange(24) + 0.5, minor=False)
+        ax.set_yticks(np.arange(7) + 0.5, minor=False)
+        ax.set_yticklabels(list("月火水木金土日")[::-1], minor=False, size="14")
+        ax.set_xticklabels([f"{i:02d}:00" for i in range(24)], minor=False, size="12")
+        for i in range(7):
+            for j in range(24):
+                c = "w" if heatmap[i, j] / heatmap.max() > 0.7 else "k"
+                text = ax.text(j+.5, i+.5, heatmap[i, j],
+                               ha="center", va="center", size="14", color=c)
+        tempfile = io.BytesIO()
+        plt.tight_layout()
+        plt.savefig(tempfile, format='png')
+        tempfile.seek(0)
+        plt.close(fig)
+        await emb_message.delete()
+        await ctx.send(file=discord.File(tempfile, filename='chart.png'))
+        
+    @frequency.command(aliases=["u"])
+    async def user(self, ctx: commands.Context, channel: discord.TextChannel = None, N: int = 2000):
+        if channel is None:
+            channel = ctx.channel
+        emb_message = await ctx.send(f'{self.bot.custom_emojis.loading} 集計中...')
+        messages = []
+        N = max(1, min(10000, N))
+        i = 0
+        async for msg in channel.history(limit=N):
+            i += 1
+            if msg.author.bot:
+                continue
+            messages.append(msg)
+            if random.random() > 0.997:
+                await emb_message.edit(content=f'{self.bot.custom_emojis.loading} 集計中... ({100*i/N:.1f} %)')
+        if len(messages) == 0:
+            await emb_message.delete()
+            return await self.bot.send_error(ctx, "どうやらBOT以外のユーザーの発言は無いようです")
+        await emb_message.edit(content=f'{self.bot.custom_emojis.loading} 集計中... (100.0 %)')
+        users = {}
+        for message in messages:
+            atr = message.author
+            if atr.id in users.keys():
+                users[atr.id]["ctr"] += 1
+            else:
+                users[atr.id] = {
+                    "name": atr.name,
+                    "icon": atr.avatar_url,
+                    "ctr": 1
+                }
+        users = sorted(list(users.values()), key=lambda x: -x["ctr"])[:10]
+        r = []
+        images = []
+        await emb_message.edit(content=f'{self.bot.custom_emojis.loading} レンダリング中...')
+        for user in users:
+            icon = await user["icon"].read()
+            if icon:
+                images.append(Image.open(io.BytesIO(icon)).convert('RGB'))
+            else:
+                gen = TextImageGenerator(
+                    "./fonts/NotoSansCJKjp-Bold.otf",
+                    fg_color=(255,255,255),
+                    bg_color=(0, 0, 255),
+                    offset=34
+                )  # type: ignore
+                img = await self.bot.loop.run_in_executor(None, gen.render)
+                images.append(img)
+            r.append(user["ctr"])
+        r = np.array(r)
+        r = r / r.max()
+        r = r ** 1.3
+        c = Circularizer(r, images)
+        await self.bot.loop.run_in_executor(None, c.minimize)
+        img = await self.bot.loop.run_in_executor(None, c.plot, 512)
+        tempfile = io.BytesIO()
+        img.save(tempfile, format='png')
+        tempfile.seek(0)
+        await emb_message.delete()
+        embed = discord.Embed(description="", title=f"#{channel.name}での発言ランキングBEST10", color=config.theme_color)
+        embed.set_footer(text=f"直近{N}件のメッセージから記録を取っています")
+        for i, user in enumerate(users):
+            icon = "🥇🥈🥉４５６７８９*"[i].replace("*", "10")
+            embed.description += f"`{icon}　 {user['name']}`\n `　　　　　　　　　　　　　　　　　　... {user['ctr']}回`\n"
+        await ctx.send(embed=embed, file=discord.File(tempfile, filename='chart.png'))
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

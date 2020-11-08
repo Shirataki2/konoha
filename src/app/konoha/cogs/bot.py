@@ -86,7 +86,7 @@ class Bot(commands.Cog):
         当BotからDIscordクライアントにメッセージを送信するのにかかる遅延です 
         '''
         discord_dur, _ = await get_duration(
-            self.bot.session.get, "https://discord.com/"
+            self.bot.session.get, "https://discord.com/api"
         )
         loading = self.bot.custom_emojis.loading
         embed = discord.Embed(

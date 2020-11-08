@@ -297,6 +297,7 @@ class Administrator(commands.Cog):
             )
         else:
             value = stdout.getvalue()
+            value = value.replace(config.bot_token ,"[TOKEN]")
             if ret is None:
                 if value:
                     await ctx.send(f'```py\n{value}\n```')

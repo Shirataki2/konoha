@@ -22,7 +22,9 @@ logger = get_module_logger(__name__)
 
 class Konoha(BotBase):
     def __init__(self, *args, **kwargs):
-        super().__init__(command_prefix=self.get_prefix, *args, **kwargs)
+        intents = discord.Intents.all()
+        intents.typing = False
+        super().__init__(command_prefix=self.get_prefix, intents=intents, *args, **kwargs)
         self.timer = Timer()
         self.timer.start(self)
         self.custom_emojis = CustomEmoji(self)
