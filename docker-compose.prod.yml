@@ -57,3 +57,13 @@ services:
     image: fredboat/lavalink:dev
     volumes:
       - ./lavalink/application.yml:/opt/Lavalink/application.yml
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    env_file:
+      - ./.env
+    links:
+      - mysql
+    ports:
+      - 10218:80
+    volumes:
+      - ./myadmin:/sessions

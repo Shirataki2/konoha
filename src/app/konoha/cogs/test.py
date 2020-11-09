@@ -100,7 +100,7 @@ class Test(commands.Cog):
         heatmap = heatmap[::-1]
         fig, ax = plt.subplots(figsize=(14, 6))
         fig.suptitle(f"#{channel.name} の活発な時間帯 (直近{N}件)", fontsize=26)
-        hm = ax.pcolor(heatmap, cmap="Blues")
+        hm = ax.pcolor(heatmap, cmap="BuGn")
         ax.set_xticks(np.arange(24) + 0.5, minor=False)
         ax.set_yticks(np.arange(7) + 0.5, minor=False)
         ax.set_yticklabels(list("月火水木金土日")[::-1], minor=False, size="14")
@@ -168,19 +168,19 @@ class Test(commands.Cog):
             r.append(user["ctr"])
         r = np.array(r)
         r = r / r.max()
-        r = r ** 1.3
+        r = r ** 1.2
         c = Circularizer(r, images)
         await self.bot.loop.run_in_executor(None, c.minimize)
-        img = await self.bot.loop.run_in_executor(None, c.plot, 512)
+        img = await self.bot.loop.run_in_executor(None, c.plot, 1024)
         tempfile = io.BytesIO()
         img.save(tempfile, format='png')
         tempfile.seek(0)
         await emb_message.delete()
         embed = discord.Embed(description="", title=f"#{channel.name}での発言ランキングBEST10", color=config.theme_color)
         embed.set_footer(text=f"直近{N}件のメッセージから記録を取っています")
-        for i, user in enumerate(users):
+        for i, user in enumerate(users[:10]):
             icon = "🥇🥈🥉４５６７８９*"[i].replace("*", "10")
-            embed.description += f"`{icon}　 {user['name']}`\n `　　　　　　　　　　　　　　　　　　... {user['ctr']}回`\n"
+            embed.description += f"`{icon}　 {user['name']}`\n `　　　　　　　　　　　　　　　　　　　　　... {user['ctr']}回`\n"
         await ctx.send(embed=embed, file=discord.File(tempfile, filename='chart.png'))
 
     @commands.Cog.listener()

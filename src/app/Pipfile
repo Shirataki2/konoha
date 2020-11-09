@@ -9,17 +9,17 @@ mypy = "*"
 flake8 = "*"
 
 [packages]
-"discord.py" = {extras = ["voice"], version = "*"}
+"discord.py" = {extras = ["voice"],version = "*"}
 discord-py = "*"
 sqlalchemy = "*"
 alembic = "*"
-aiomysql = {git = "https://github.com/aio-libs/aiomysql", ref = "d842ec3f95614a2042a9107d7b65edfcf661d614"}
+aiomysql = {git = "https://github.com/aio-libs/aiomysql",ref = "d842ec3f95614a2042a9107d7b65edfcf661d614"}
 colorama = "*"
 tabulate = "*"
 pybooru = "*"
 psutil = "*"
 pytz = "*"
-fastapi = {extras = ["all"], version = "*"}
+fastapi = {extras = ["all"],version = "*"}
 pynacl = "*"
 youtube-dl = "*"
 pydub = "*"
@@ -32,6 +32,7 @@ emoji = "*"
 pymysql = "*"
 wavelink = "*"
 84caae8 = {git = "https://github.com/Rapptz/discord-ext-menus"}
+jishaku = "*"
 
 [requires]
 python_version = "3.8"

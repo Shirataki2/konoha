@@ -11,6 +11,7 @@ guild = Table(
     Column("prefix", String(255), server_default=">", nullable=False),
     Column("gc_channel", String(255), nullable=True),
     Column("gc_url", String(255), nullable=True),
+    Column("dice", Boolean, nullable=False, server_default=sa.sql.false()),
     Column("expand", Boolean, server_default=sa.sql.false(), nullable=True),
 )
 

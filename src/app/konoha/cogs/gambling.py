@@ -9,6 +9,7 @@ import aiohttp
 import random
 import secrets
 import random
+import numpy as np
 from PIL import Image
 from functools import partial
 from concurrent.futures import ProcessPoolExecutor
@@ -50,6 +51,37 @@ class Gambling(commands.Cog):
         img.save(f, format="png")
         f.seek(0)
         return f
+
+    @commands.group()
+    async def autodice(self, ctx: commands.Context):
+        '''
+        3D6のようなメッセージに反応してダイスを振った結果を返します
+        '''
+        if ctx.invoked_subcommand is None:
+            guild = await q.Guild(self.bot, ctx.guild.id).get()
+            if guild:
+                dice = '有効' if guild.dice else '無効'
+                await ctx.send(f'ダイス機能は**{dice}**です')
+            await ctx.send_help("autodice")
+
+    @autodice.command()
+    @commands.guild_only()
+    async def on(self, ctx: commands.Context):
+        '''
+        ダイス機能をオンにします
+        '''
+        await q.Guild(self.bot, ctx.guild.id).set(dice=True)
+        await ctx.send('ダイス機能を**有効**にしました')
+
+    @autodice.command()
+    @commands.guild_only()
+    async def off(self, ctx: commands.Context):
+        '''
+        ダイス機能をオフにします
+        '''
+        await q.Guild(self.bot, ctx.guild.id).set(dice=False)
+        await ctx.send('ダイス機能を**無効**にしました')
+
 
     @commands.command()
     async def dice(self, ctx: commands.Context, num: int = 1):
@@ -401,6 +433,27 @@ class Gambling(commands.Cog):
         for user, money in zip(users, moneys):
             embed.description += f'\n\n{user.mention}: {money.amount}ペリカ'
         await ctx.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot or message.guild is None:
+            return
+        guild = await q.Guild(self.bot, message.guild.id).get()
+        if not guild.dice:
+            return
+        try:
+            a, b = tuple(map(int, message.content.lower().split('d')))
+        except:
+            return
+        if a < 1 or b < 1 or a > 10 ** 5 or b > 10 ** 9:
+            return
+        dice = np.random.randint(1, b+1, a)
+        if a <= 50:
+            embed = discord.Embed(title=f"結果: {dice.sum()}", description=f"```\n{dice}\n```")
+        else:
+            embed = discord.Embed(title=f"結果: {dice.sum()}")
+        embed.set_footer(text=f"{a}D{b}")
+        await message.channel.send(embed=embed)
 
 
 def chinchiro(dices):

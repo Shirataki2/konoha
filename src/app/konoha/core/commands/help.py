@@ -55,7 +55,7 @@ class CustomHelpCommand(commands.HelpCommand):
         ctx = self.context
         bot = ctx.bot
         cogs = [bot.get_cog(cog) for cog in bot.cogs]
-        cogs.sort(key=lambda cog: cog.order)
+        cogs.sort(key=lambda cog: getattr(cog, 'order', -1))
         commands = [command for command in await self.filter_commands(bot.commands)]
         paginator = EmbedPaginator(
             footer=f"{self.clean_prefix}help コマンド名 でコマンドの詳細が表示されます",

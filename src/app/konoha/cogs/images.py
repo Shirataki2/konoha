@@ -67,7 +67,7 @@ class Images(commands.Cog):
             else:
                 await ctx.send(f"まだWebHookを利用していません")
 
-    @tasks.loop(seconds=300)
+    @tasks.loop(seconds=180)
     async def postloop(self):
         try:
             hooks = await q.Hook.get_all(self.bot, verbose=2)
@@ -87,6 +87,17 @@ class Images(commands.Cog):
                 except:
                     fileurl = 'https://danbooru.donmai.us' + post['source']
                 embed = discord.Embed(title='щ（゜ロ゜щ）')
+                try:
+                    p = lambda c: "/".join(f"[{e.replace('_', ' ').title()}](https://danbooru.donmai.us/posts?tags={e})" for e in post[c].split())
+                    embed.add_field(name="Detail", value=f"[view](https://danbooru.donmai.us/posts/{post['id']})")
+                    if post['tag_string_artist']:
+                        embed.add_field(name="Artist", value=p('tag_string_artist'))
+                    if post['tag_string_copyright']:
+                        embed.add_field(name="Copyright", value=p('tag_string_copyright'))
+                    if post['tag_string_character']:
+                        embed.add_field(name="Character", value=p('tag_string_character'))
+                except Exception as e:
+                    pass
                 embed.set_image(url=fileurl)
                 async with aiohttp.ClientSession() as session:
                     webhook = discord.Webhook.from_url(
@@ -95,9 +106,7 @@ class Images(commands.Cog):
                     )
                     await webhook.send(embed=embed)
         except Exception as e:
-            logger.warn("Webhook送信中にエラーが発生しました")
-            logger.warn(e.__class__.__name__)
-            logger.warn(str(e))
+            pass
 
 
 def setup(bot):

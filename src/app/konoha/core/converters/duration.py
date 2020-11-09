@@ -4,7 +4,7 @@ from discord.ext import commands
 
 d = '[0-9０１２３４５６７８９]'
 yers = re.compile(f'({d}+)?(?:年|year|yr|y).*')
-mths = re.compile(f'({d}+)?(?:.月|month).*')
+mths = re.compile(f'({d}+)?(?:.月|month|mo|mn).*')
 weks = re.compile(f'({d}+)?(?:週|week|w).*')
 days = re.compile(f'({d}+)?(?:日|day|d).*')
 hurs = re.compile(f'({d}+)?(?:時間|hr|hour|h).*')
@@ -75,8 +75,6 @@ class DurationToSecondsConverter(commands.Converter):
             argument = "".join(argument)
         y, mo, w, d, h, m, s, r = extract(argument)
         t = 0.0
-        u = 1.0
-        for j, mul in zip([s, m, h, d, w, mo, y, 0], [1, 60, 60, 24, 7, 30.4165, 52.142]):
-            u *= mul
-            t += j * u
+        for j, mul in zip([s, m, h, d, w, mo, y, 0], [1, 60, 60*60, 60*60*24, 60*60*24*7, 60*60*24*30, 60*60*24*365]):
+            t += j * mul
         return {"seconds": t, "original": r}

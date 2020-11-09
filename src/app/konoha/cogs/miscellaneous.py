@@ -58,8 +58,13 @@ class Miscellaneous(commands.Cog):
         '''
         指定した秒数後にあなた宛てにメンションを送信します
         '''
+        print(duration)
         if duration["seconds"] < 0:
             return await ctx.send("負の時間待たせるとはどういうことなのでしょう(哲学)")
+        if duration["seconds"] < 0.1:
+            return await ctx.send(f"無の時間のタイマーを設定しました! {ctx.author.mention}\n\n解釈できない文字列とか入れてませんか?")
+        if duration["seconds"] > 60 * 60 * 24 * 365 * 3:
+            return await ctx.send("あいにく3年より長くは待ってられません")
         await self.bot.timer.create_event(
             'timer',
             datetime.utcnow() + timedelta(seconds=duration["seconds"]),

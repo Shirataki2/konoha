@@ -91,6 +91,10 @@ class BotBase(commands.Bot):
 
     def get_all_cogs(self, reload=False):
         dirname = os.path.dirname(os.path.abspath(__file__))
+        try:
+            self.load_extension('jishaku')
+        except:
+            pass
         cogs = glob.glob(f'{dirname}/../../cogs/**.py')
         logger.info(f"Cogを{'再' if reload else ''}読込中...")
         for cog in cogs:

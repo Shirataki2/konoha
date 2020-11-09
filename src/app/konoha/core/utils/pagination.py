@@ -88,7 +88,8 @@ class EmbedPaginator(commands.Paginator):
             return all([
                 r.message.id == message.id,
                 str(r.emoji) in emojis,
-                u.id != ctx.bot.user.id
+                u.id != ctx.bot.user.id,
+                ctx.author == u
             ])
         is_dm = False
         while True:
