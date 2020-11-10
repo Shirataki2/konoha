@@ -89,11 +89,13 @@ class Starboard(commands.Cog):
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.guild_id is None or payload.emoji.name != '⭐':
             return
+        guild = self.bot.get_guild(payload.guild_id)
+        if guild.get_member(payload.user_id).bot:
+            return
         sbc = await q.StarboardConfig(self.bot, str(payload.guild_id)).get()
         if sbc is None or not sbc.enabled:
             return
         sb = await q.Starboard(self.bot, payload.message_id).get()
-        guild = self.bot.get_guild(payload.guild_id)
         channel = await self.bot.fetch_channel(int(sbc.channel))
         msg_channel = await self.bot.fetch_channel(payload.channel_id)
         message: discord.Message = await msg_channel.fetch_message(payload.message_id)

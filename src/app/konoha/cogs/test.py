@@ -27,7 +27,7 @@ import konoha.models.crud2 as q
 from konoha.core import config
 from konoha.core.utils import TextImageGenerator
 from konoha.core.utils.circularizer import Circularizer
-from konoha.core.bot.konoha import Konoha
+from konoha.core.bot.konoha import Konoha, Word
 from konoha.core.commands import checks
 from konoha.core.converters import DurationToSecondsConverter, ColorConverter
 from konoha.core.log.logger import get_module_logger
@@ -68,6 +68,40 @@ class Test(commands.Cog):
     async def dev(self, ctx: commands.Context):
         pass
 
+
+    @dev.command(hidden=True)
+    async def markov(self, ctx: commands.Context, user: discord.Member = None, channel: discord.TextChannel = None, N: int = 100):
+        if channel is None:
+            channel = ctx.channel
+        words = {}
+        start = []
+        msg = await ctx.send("収集中...")
+        N = max(1, min(1000, N))
+        i = 1
+        async for message in channel.history(limit=N):
+            if user is not None and message.author != user:
+                continue
+            if message.author.bot:
+                continue
+            tokens = await self.bot.morph(message.content)
+            tokens.append(Word.eos())
+            start.append(tokens[0])
+            if random.random() > 0.992:
+                await msg.edit(content=f"収集中...({i/N:.1f} %)")
+            for w, nx in zip(tokens[:-1], tokens[1:]):
+                if w.name in words:
+                    words[w.name].append(nx)
+                else:
+                    words[w.name] = [nx]
+            i += 1
+        await msg.edit(content="自動生成されたメッセージ:")
+        word = random.choice(start)
+        sentence = word.name
+        while len(sentence) < 300 and word.yomi != "#EOS#":
+            word = random.choice(words[word.name])
+            if word.name != "#EOS#":
+                sentence += word.name
+        await ctx.send(sentence)
 
     @dev.group()
     async def stat(self, ctx: commands.Context):

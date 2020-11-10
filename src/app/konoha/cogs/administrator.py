@@ -3,6 +3,7 @@ from discord.ext import commands
 
 import re
 import os
+import sys
 import io
 import subprocess
 import tabulate
@@ -53,7 +54,7 @@ class Administrator(commands.Cog):
         Cogを再読み込みします
         '''
         self.bot.get_all_cogs(True)
-        await ctx.send('Cogの再読み込みが終了しました')
+        await self.bot.send_notification(ctx, 'Cogの再読み込みが終了しました')
 
     @commands.is_owner()
     @commands.command()
@@ -88,7 +89,7 @@ class Administrator(commands.Cog):
             await ctx.send(content=description)
 
     @commands.is_owner()
-    @commands.command()
+    @commands.command(hidden=True)
     async def add_user_as(self, ctx: commands.Context, user: discord.User, role: str):
         '''
         ユーザーを指定した役職へ任命します
@@ -115,6 +116,27 @@ class Administrator(commands.Cog):
             return await ctx.send(f"```\n{table}\n```")
         except aiomysql.sa.ResourceClosedError:
             return await ctx.send(f"正常に実行されました")
+
+    @commands.is_owner()
+    @commands.command()
+    async def restart(self, ctx: commands.Context):
+        '''
+        Botを再起動します
+        '''
+        try:
+            embed = discord.Embed(title="⚠ 再起動します", color=0xff0000)
+            await ctx.send(embed=embed)
+            p = psutil.Process(os.getpid())
+            for handler in p.open_files() + p.connections():
+                os.close(handler.fd)
+        except Exception as e:
+            return await self.bot.send_error(
+                ctx, f'{e.__class__.__name__}',
+                f'```py\n{traceback.format_exc()[:2000]}\n```'
+            )
+        python = sys.executable
+        args = '-m konoha config.ini'.split()
+        os.execl(python, 'python', *args)
 
     @commands.is_owner()
     @commands.command(aliases=["e"])
@@ -236,7 +258,7 @@ class Administrator(commands.Cog):
             ),
             page=p
         )
-        # Dick
+        # Disk
         paginator.new_page()
         p = 2
         paginator.content[p]["title"] += "[Others]"

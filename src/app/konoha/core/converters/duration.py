@@ -4,7 +4,7 @@ from discord.ext import commands
 
 d = '[0-9０１２３４５６７８９]'
 yers = re.compile(f'({d}+)?(?:年|year|yr|y).*')
-mths = re.compile(f'({d}+)?(?:.月|month|mo|mn).*')
+mths = re.compile(f'(({d}+)?(?:.月|month|mo)).*')
 weks = re.compile(f'({d}+)?(?:週|week|w).*')
 days = re.compile(f'({d}+)?(?:日|day|d).*')
 hurs = re.compile(f'({d}+)?(?:時間|hr|hour|h).*')
@@ -25,9 +25,11 @@ def extract(argument: str):
     except:
         y = 0
     try:
-        m = int(n[0]) if (n := mths.findall(argument)) else 0
+        print(mths.findall(argument))
+        m = int(n[0][1]) if (n := mths.findall(argument)) else 0
         if m != 0:
             r += f'{m}ヶ月'
+        argument = argument.replace(n[0][0], '')
     except:
         m = 0
     try:

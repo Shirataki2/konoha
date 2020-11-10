@@ -122,17 +122,20 @@ class BotBase(commands.Bot):
         except:
             logger.critical("不明なエラーが発生しました", exc_info=True)
         finally:
-            logger.info("Botを終了中です...")
-            self.loop.run_until_complete(self.logout())
-            logger.info("\tログアウト完了")
-            for task in asyncio.all_tasks(self.loop):
-                task.cancel()
-                logger.info(f"\tTask: {task.get_name()}をキャンセルしました")
-            try:
-                self.loop.run_until_complete(
-                    asyncio.gather(*asyncio.all_tasks(self.loop)))
-            except asyncio.CancelledError:
-                logger.info("すべてのタスクをキャンセルしました")
-            finally:
-                self.loop.run_until_complete(self.session.close())
-                logger.info("Bye")
+            self.loop.run_until_complete(self.terminate())
+    
+    async def terminate(self):
+        logger.info("Botを終了中です...")
+        await self.logout()
+        logger.info("\tログアウト完了")
+        for task in asyncio.all_tasks(self.loop):
+            task.cancel()
+            logger.info(f"\tTask: {task.get_name()}をキャンセルしました")
+        try:
+            self.loop.run_until_complete(
+                asyncio.gather(*asyncio.all_tasks(self.loop)))
+        except asyncio.CancelledError:
+            logger.info("すべてのタスクをキャンセルしました")
+        finally:
+            # self.loop.run_until_complete(self.session.close())
+            logger.info("Bye")

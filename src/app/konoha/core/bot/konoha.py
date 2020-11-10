@@ -136,3 +136,7 @@ class Word:
     subpos1: str
     subpos2: str
     subpos3: str
+    
+    @classmethod
+    def eos(cls):
+        return cls(name="#EOS#", yomi="#EOS#", pos="#EOS#", subpos1="#EOS#", subpos2="#EOS#", subpos3="#EOS#")
